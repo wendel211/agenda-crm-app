@@ -1,0 +1,76 @@
+/** Tipos de domínio do CRM. */
+
+export type AppointmentStatus = 'agendado' | 'confirmado' | 'concluido' | 'cancelado' | 'faltou';
+
+export interface Client {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string;
+  birthday?: string;
+  notes?: string;
+  lastVisit?: string;
+  totalSpent: number;
+  visits: number;
+}
+
+export interface Service {
+  id: string;
+  name: string;
+  durationMinutes: number;
+  price: number;
+  color: string;
+  active: boolean;
+}
+
+export interface Appointment {
+  id: string;
+  clientId: string;
+  clientName: string;
+  serviceIds: string[];
+  serviceNames: string[];
+  professional: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  price: number;
+  status: AppointmentStatus;
+  notes?: string;
+}
+
+export type TransactionKind = 'receita' | 'despesa';
+
+export interface Transaction {
+  id: string;
+  kind: TransactionKind;
+  description: string;
+  category: string;
+  amount: number;
+  date: string;
+}
+
+export interface Goal {
+  id: string;
+  title: string;
+  kind: 'pessoal' | 'profissional';
+  target: number;
+  current: number;
+  unit: 'BRL' | 'atendimentos';
+  deadline: string;
+}
+
+export interface TeamMember {
+  id: string;
+  name: string;
+  role: string;
+  active: boolean;
+}
+
+export interface AppNotification {
+  id: string;
+  title: string;
+  message: string;
+  createdAt: string;
+  read: boolean;
+  kind: 'agendamento' | 'lembrete' | 'financeiro' | 'sistema';
+}
