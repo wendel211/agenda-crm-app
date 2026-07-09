@@ -16,6 +16,8 @@ interface ButtonProps {
   loading?: boolean;
   disabled?: boolean;
   style?: ViewStyle;
+  /** Sobrescreve a cor do texto/ícone (ex.: botão sobre fundo colorido). */
+  labelColor?: string;
 }
 
 const background: Record<Variant, string> = {
@@ -41,8 +43,10 @@ export function Button({
   loading = false,
   disabled = false,
   style,
+  labelColor,
 }: ButtonProps) {
   const dimmed = disabled || loading;
+  const contentColor = labelColor ?? foreground[variant];
 
   return (
     <Pressable
@@ -60,11 +64,11 @@ export function Button({
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={foreground[variant]} />
+        <ActivityIndicator color={contentColor} />
       ) : (
         <>
-          {icon ? <Ionicons name={icon} size={18} color={foreground[variant]} /> : null}
-          <AppText style={typography.bodyStrong} color={foreground[variant]}>
+          {icon ? <Ionicons name={icon} size={18} color={contentColor} /> : null}
+          <AppText style={typography.bodyStrong} color={contentColor}>
             {label}
           </AppText>
         </>
