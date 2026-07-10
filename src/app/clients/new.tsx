@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
-import { AppText, Button, Screen, ScreenHeader, TextField } from '@/components/ui';
+import { AppText, Avatar, Button, Screen, ScreenHeader, TextField } from '@/components/ui';
 import { useBusiness } from '@/context/auth-context';
 import { getClient, saveClient } from '@/data/clients';
 import { dateMaskToISO, maskDate, maskPhone } from '@/lib/masks';
-import { colors, spacing } from '@/theme';
+import { pickImage, uploadImage } from '@/lib/upload';
+import { colors, radius, spacing } from '@/theme';
 
 function isoToDateMask(iso?: string): string {
   if (!iso) {
@@ -26,6 +28,7 @@ export default function ClientFormScreen() {
   const [email, setEmail] = useState('');
   const [birthday, setBirthday] = useState('');
   const [notes, setNotes] = useState('');
+  const [photoUri, setPhotoUri] = useState<string>();
   const [error, setError] = useState<string>();
   const [saving, setSaving] = useState(false);
 
@@ -40,6 +43,7 @@ export default function ClientFormScreen() {
         setEmail(client.email ?? '');
         setBirthday(isoToDateMask(client.birthday));
         setNotes(client.notes ?? '');
+        setPhotoUri(client.avatarUrl);
       }
     });
   }, [id]);
@@ -52,6 +56,11 @@ export default function ClientFormScreen() {
     setError(undefined);
     setSaving(true);
     try {
+      // Foto nova (URI local) sobe para o Storage; URL existente é mantida.
+      let avatarUrl: string | undefined;
+      if (photoUri?.startsWith('file')) {
+        avatarUrl = await uploadImage(photoUri, `clients/${business.id}`);
+      }
       await saveClient({
         id,
         businessId: business.id,
@@ -60,6 +69,7 @@ export default function ClientFormScreen() {
         email: email.trim() || undefined,
         birthday: dateMaskToISO(birthday),
         notes: notes.trim() || undefined,
+        avatarUrl,
       });
       router.back();
     } catch {
@@ -77,6 +87,23 @@ export default function ClientFormScreen() {
       />
 
       <View style={styles.form}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Escolher foto do cliente"
+          onPress={async () => {
+            const uri = await pickImage();
+            if (uri) {
+              setPhotoUri(uri);
+            }
+          }}
+          style={styles.photoPicker}
+        >
+          <Avatar name={name || '?'} size={80} uri={photoUri} />
+          <View style={styles.photoBadge}>
+            <Ionicons name="camera" size={14} color={colors.surface} />
+          </View>
+        </Pressable>
+
         <TextField
           label="Nome completo"
           icon="person-outline"
@@ -131,4 +158,18 @@ export default function ClientFormScreen() {
 
 const styles = StyleSheet.create({
   form: { gap: spacing.lg, paddingTop: spacing.sm },
+  photoPicker: { alignSelf: 'center' },
+  photoBadge: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    width: 26,
+    height: 26,
+    borderRadius: radius.full,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: colors.background,
+  },
 });

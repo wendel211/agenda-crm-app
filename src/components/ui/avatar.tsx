@@ -1,4 +1,5 @@
 import { StyleSheet, View } from 'react-native';
+import { Image } from 'expo-image';
 
 import { colors, radius } from '@/theme';
 import { AppText } from './app-text';
@@ -8,6 +9,8 @@ const PALETTE = [colors.primary, colors.accent, colors.success, colors.info, col
 interface AvatarProps {
   name: string;
   size?: number;
+  /** Foto opcional — quando presente substitui as iniciais. */
+  uri?: string;
 }
 
 function initialsOf(name: string): string {
@@ -25,7 +28,19 @@ function colorOf(name: string): string {
   return PALETTE[hash];
 }
 
-export function Avatar({ name, size = 44 }: AvatarProps) {
+export function Avatar({ name, size = 44, uri }: AvatarProps) {
+  if (uri) {
+    return (
+      <Image
+        source={{ uri }}
+        style={[styles.circle, { width: size, height: size }]}
+        contentFit="cover"
+        transition={150}
+        accessibilityLabel={`Foto de ${name}`}
+      />
+    );
+  }
+
   const background = colorOf(name);
 
   return (
@@ -51,5 +66,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
 });

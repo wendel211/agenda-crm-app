@@ -105,6 +105,7 @@ interface SaveClientInput {
   email?: string;
   birthday?: string;
   notes?: string;
+  avatarUrl?: string;
 }
 
 /** Arquivar preserva o histórico; o cliente some da lista e do agendamento. */
@@ -130,6 +131,7 @@ export async function saveClient(input: SaveClientInput): Promise<void> {
     email: input.email || null,
     birthday: input.birthday || null,
     notes: input.notes || null,
+    ...(input.avatarUrl !== undefined ? { avatar_url: input.avatarUrl } : {}),
   };
   const query = input.id
     ? supabase.from('clients').update(row).eq('id', input.id)

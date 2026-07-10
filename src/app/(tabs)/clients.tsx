@@ -45,7 +45,7 @@ function ClientRow({ client, onPress }: ClientRowProps) {
     <ListRow
       title={client.name}
       subtitle={`${client.visits} visitas · ${client.phone}`}
-      left={<Avatar name={client.name} />}
+      left={<Avatar name={client.name} uri={client.avatarUrl} />}
       right={inactive ? <Badge label={`${away}d sem vir`} tone="warning" /> : undefined}
       onPress={handlePress}
     />

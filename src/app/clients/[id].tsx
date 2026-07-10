@@ -67,7 +67,7 @@ export default function ClientProfileScreen() {
         ) : (
           <>
             <View style={styles.hero}>
-              <Avatar name={client.name} size={72} />
+              <Avatar name={client.name} size={72} uri={client.avatarUrl} />
               <AppText variant="title">{client.name}</AppText>
               <AppText variant="caption" color={colors.sub}>
                 {client.phone}
