@@ -1,35 +1,37 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Switch, View } from 'react-native';
+import { StyleSheet, Switch, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { AppText, Button, Card, Screen, ScreenHeader } from '@/components/ui';
+import { useAuth, useBusiness } from '@/context/auth-context';
+import { updateSchedule } from '@/data/business';
 import { colors, radius, spacing } from '@/theme';
-
-interface DaySchedule {
-  day: string;
-  open: boolean;
-  from: string;
-  to: string;
-}
-
-const initialSchedule: DaySchedule[] = [
-  { day: 'Segunda', open: true, from: '09:00', to: '19:00' },
-  { day: 'Terça', open: true, from: '09:00', to: '19:00' },
-  { day: 'Quarta', open: true, from: '09:00', to: '19:00' },
-  { day: 'Quinta', open: true, from: '09:00', to: '20:00' },
-  { day: 'Sexta', open: true, from: '09:00', to: '20:00' },
-  { day: 'Sábado', open: true, from: '08:00', to: '17:00' },
-  { day: 'Domingo', open: false, from: '09:00', to: '13:00' },
-];
 
 export default function BusinessHoursScreen() {
   const router = useRouter();
-  const [schedule, setSchedule] = useState(initialSchedule);
+  const business = useBusiness();
+  const { refreshBusiness } = useAuth();
+  const [schedule, setSchedule] = useState(business.schedule);
+  const [error, setError] = useState<string>();
+  const [saving, setSaving] = useState(false);
 
   function toggleDay(day: string) {
     setSchedule((current) =>
       current.map((item) => (item.day === day ? { ...item, open: !item.open } : item)),
     );
+  }
+
+  async function handleSave() {
+    setError(undefined);
+    setSaving(true);
+    try {
+      await updateSchedule(business.id, schedule);
+      await refreshBusiness();
+      router.back();
+    } catch {
+      setError('Não foi possível salvar. Tente novamente.');
+      setSaving(false);
+    }
   }
 
   return (
@@ -53,19 +55,19 @@ export default function BusinessHoursScreen() {
             </AppText>
             {item.open ? (
               <View style={styles.hours}>
-                <Pressable accessibilityRole="button" style={styles.hourChip}>
+                <View style={styles.hourChip}>
                   <AppText variant="caption" color={colors.primary}>
                     {item.from}
                   </AppText>
-                </Pressable>
+                </View>
                 <AppText variant="caption" color={colors.muted}>
                   —
                 </AppText>
-                <Pressable accessibilityRole="button" style={styles.hourChip}>
+                <View style={styles.hourChip}>
                   <AppText variant="caption" color={colors.primary}>
                     {item.to}
                   </AppText>
-                </Pressable>
+                </View>
               </View>
             ) : (
               <AppText variant="caption" color={colors.muted}>
@@ -76,7 +78,13 @@ export default function BusinessHoursScreen() {
         ))}
       </Card>
 
-      <Button label="Salvar horários" onPress={() => router.back()} style={styles.save} />
+      {error ? (
+        <AppText variant="caption" color={colors.danger} align="center" style={styles.error}>
+          {error}
+        </AppText>
+      ) : null}
+
+      <Button label="Salvar horários" onPress={handleSave} loading={saving} style={styles.save} />
     </Screen>
   );
 }
@@ -96,5 +104,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     backgroundColor: colors.primarySoft,
   },
+  error: { marginTop: spacing.lg },
   save: { marginTop: spacing.xxl },
 });

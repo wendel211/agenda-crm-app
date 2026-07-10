@@ -3,6 +3,9 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { AppText, Button, Screen, ScreenHeader, TextField } from '@/components/ui';
+import { useBusiness } from '@/context/auth-context';
+import { createTransaction } from '@/data/transactions';
+import { maskCurrency, parseCurrency } from '@/lib/masks';
 import { colors, radius, spacing } from '@/theme';
 import type { TransactionKind } from '@/types';
 
@@ -13,16 +16,42 @@ const categories: Record<TransactionKind, string[]> = {
 
 export default function NewTransactionScreen() {
   const router = useRouter();
+  const business = useBusiness();
   const [kind, setKind] = useState<TransactionKind>('receita');
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('Atendimento');
+  const [error, setError] = useState<string>();
+  const [saving, setSaving] = useState(false);
 
   const isIncome = kind === 'receita';
 
   function selectKind(next: TransactionKind) {
     setKind(next);
     setCategory(categories[next][0]);
+  }
+
+  async function handleSave() {
+    const value = parseCurrency(amount);
+    if (value <= 0 || !description.trim()) {
+      setError('Informe um valor maior que zero e uma descrição.');
+      return;
+    }
+    setError(undefined);
+    setSaving(true);
+    try {
+      await createTransaction({
+        businessId: business.id,
+        kind,
+        description: description.trim(),
+        category,
+        amount: value,
+      });
+      router.back();
+    } catch {
+      setError('Não foi possível salvar. Tente novamente.');
+      setSaving(false);
+    }
   }
 
   return (
@@ -57,9 +86,10 @@ export default function NewTransactionScreen() {
           label="Valor"
           icon="cash-outline"
           placeholder="R$ 0,00"
-          keyboardType="decimal-pad"
+          keyboardType="number-pad"
           value={amount}
-          onChangeText={setAmount}
+          onChangeText={(value) => setAmount(maskCurrency(value))}
+          error={error}
         />
         <TextField
           label="Descrição"
@@ -91,7 +121,7 @@ export default function NewTransactionScreen() {
           })}
         </View>
 
-        <Button label="Salvar lançamento" onPress={() => router.back()} />
+        <Button label="Salvar lançamento" onPress={handleSave} loading={saving} />
       </View>
     </Screen>
   );

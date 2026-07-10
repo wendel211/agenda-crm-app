@@ -31,7 +31,7 @@ export function AppointmentCard({ appointment }: AppointmentCardProps) {
           {appointment.clientName}
         </AppText>
         <AppText variant="caption" color={colors.sub} numberOfLines={1}>
-          {appointment.serviceNames.join(' + ')} · {appointment.professional}
+          {appointment.serviceNames.join(' + ')} · {appointment.professionalName}
         </AppText>
         <View style={styles.footer}>
           <Badge label={meta.label} tone={meta.tone} />

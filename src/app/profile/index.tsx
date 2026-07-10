@@ -11,11 +11,13 @@ import {
   Screen,
   ScreenHeader,
 } from '@/components/ui';
+import { useBusiness } from '@/context/auth-context';
 import { supabase } from '@/lib/supabase';
 import { colors, spacing } from '@/theme';
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const business = useBusiness();
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -27,11 +29,11 @@ export default function ProfileScreen() {
       <ScreenHeader title="Perfil e ajustes" />
 
       <Card style={styles.profileCard}>
-        <Avatar name="Estúdio Beleza" size={56} />
+        <Avatar name={business.name} size={56} />
         <View style={styles.profileInfo}>
-          <AppText variant="heading">Meu negócio</AppText>
+          <AppText variant="heading">{business.name}</AppText>
           <AppText variant="caption" color={colors.sub}>
-            Toque para editar nome, contato e endereço
+            {business.segments.length > 0 ? business.segments.join(' · ') : 'Seu negócio de beleza'}
           </AppText>
         </View>
         <Badge label="Plano grátis" tone="accent" />

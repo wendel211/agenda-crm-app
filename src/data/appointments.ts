@@ -72,6 +72,23 @@ export async function listAppointmentsByClient(clientId: string): Promise<Appoin
   return (data as unknown as AppointmentRow[]).map(mapAppointment);
 }
 
+export async function listRecentAppointments(businessId: string, days: number): Promise<Appointment[]> {
+  const since = new Date();
+  since.setDate(since.getDate() - days);
+  const sinceISO = since.toISOString().slice(0, 10);
+
+  const { data, error } = await supabase
+    .from('appointments')
+    .select(COLUMNS)
+    .eq('business_id', businessId)
+    .gte('date', sinceISO)
+    .order('date', { ascending: false });
+  if (error) {
+    throw new Error(error.message);
+  }
+  return (data as unknown as AppointmentRow[]).map(mapAppointment);
+}
+
 export async function getAppointment(id: string): Promise<Appointment | null> {
   const { data, error } = await supabase.from('appointments').select(COLUMNS).eq('id', id).maybeSingle();
   if (error) {

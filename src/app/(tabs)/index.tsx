@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 import { AppointmentCard } from '@/components/appointment-card';
+import { QueryBoundary } from '@/components/query-boundary';
 import {
   AppText,
   Card,
@@ -13,33 +14,51 @@ import {
   Screen,
   SectionHeader,
 } from '@/components/ui';
+import { useBusiness } from '@/context/auth-context';
+import { listAppointmentsByDate } from '@/data/appointments';
+import { listGoals } from '@/data/goals';
+import { useQuery } from '@/data/use-query';
 import { formatCurrency, formatWeekday, toISODate } from '@/lib/format';
-import { mockAppointments, mockGoals, mockNotifications } from '@/mocks';
 import { colors, radius, spacing } from '@/theme';
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const business = useBusiness();
   const today = toISODate(new Date());
-  const todayAppointments = mockAppointments
-    .filter((item) => item.date === today && item.status !== 'cancelado')
-    .sort((a, b) => a.startTime.localeCompare(b.startTime));
-  const expectedToday = todayAppointments.reduce((sum, item) => sum + item.price, 0);
-  const hasUnread = mockNotifications.some((item) => !item.read);
-  const mainGoals = mockGoals.filter((goal) => goal.kind === 'profissional');
+
+  const { data, loading, error, refetch } = useQuery(
+    async () => {
+      const [appointments, goals] = await Promise.all([
+        listAppointmentsByDate(business.id, today),
+        listGoals(business.id),
+      ]);
+      return { appointments, goals };
+    },
+    [business.id, today],
+  );
+
+  const todayAppointments = (data?.appointments ?? []).filter(
+    (item) => item.status !== 'cancelado',
+  );
+  const expectedToday = todayAppointments
+    .filter((item) => item.status !== 'faltou')
+    .reduce((sum, item) => sum + item.price, 0);
+  const goals = data?.goals ?? [];
 
   return (
     <Screen>
       <View style={styles.header}>
         <View style={styles.greeting}>
-          <AppText variant="title">Olá! 👋</AppText>
+          <AppText variant="title">{business.name}</AppText>
           <AppText variant="caption" color={colors.sub}>
             {formatWeekday(new Date())}
           </AppText>
         </View>
-        <View style={styles.bellWrapper}>
-          <IconButton icon="notifications-outline" label="Notificações" onPress={() => router.push('/notifications')} />
-          {hasUnread ? <View style={styles.unreadDot} /> : null}
-        </View>
+        <IconButton
+          icon="notifications-outline"
+          label="Notificações"
+          onPress={() => router.push('/notifications')}
+        />
       </View>
 
       <LinearGradient
@@ -118,43 +137,53 @@ export default function DashboardScreen() {
         </Pressable>
       </View>
 
-      <SectionHeader title="Hoje" actionLabel="Ver agenda" onAction={() => router.push('/agenda')} />
-      {todayAppointments.length === 0 ? (
-        <EmptyState
-          icon="calendar-outline"
-          title="Dia livre"
-          message="Nenhum atendimento marcado para hoje."
-          actionLabel="Criar agendamento"
-          onAction={() => router.push('/appointments/new')}
-        />
-      ) : (
-        todayAppointments.map((appointment) => (
-          <AppointmentCard key={appointment.id} appointment={appointment} />
-        ))
-      )}
+      <QueryBoundary loading={loading} error={error} onRetry={refetch}>
+        <SectionHeader title="Hoje" actionLabel="Ver agenda" onAction={() => router.push('/agenda')} />
+        {todayAppointments.length === 0 ? (
+          <EmptyState
+            icon="calendar-outline"
+            title="Dia livre"
+            message="Nenhum atendimento marcado para hoje."
+            actionLabel="Criar agendamento"
+            onAction={() => router.push('/appointments/new')}
+          />
+        ) : (
+          todayAppointments.map((appointment) => (
+            <AppointmentCard key={appointment.id} appointment={appointment} />
+          ))
+        )}
 
-      <SectionHeader title="Metas do mês" actionLabel="Ver todas" onAction={() => router.push('/goals')} />
-      {mainGoals.map((goal) => {
-        const progress = goal.current / goal.target;
-        const currentLabel =
-          goal.unit === 'BRL' ? formatCurrency(goal.current) : `${goal.current}`;
-        const targetLabel =
-          goal.unit === 'BRL' ? formatCurrency(goal.target) : `${goal.target}`;
-        return (
-          <Card key={goal.id} onPress={() => router.push('/goals')} style={styles.goalCard}>
-            <View style={styles.goalHeader}>
-              <AppText variant="bodyStrong">{goal.title}</AppText>
-              <AppText variant="caption" color={colors.primary}>
-                {Math.round(progress * 100)}%
-              </AppText>
-            </View>
-            <ProgressBar value={progress} />
+        <SectionHeader title="Metas do mês" actionLabel="Ver todas" onAction={() => router.push('/goals')} />
+        {goals.length === 0 ? (
+          <Card onPress={() => router.push('/goals/new')} style={styles.goalCard}>
+            <AppText variant="bodyStrong">Defina sua primeira meta</AppText>
             <AppText variant="caption" color={colors.sub}>
-              {currentLabel} de {targetLabel}
+              Ex.: faturar R$ 8.000 neste mês — acompanhe o progresso por aqui.
             </AppText>
           </Card>
-        );
-      })}
+        ) : (
+          goals.slice(0, 2).map((goal) => {
+            const progress = goal.target > 0 ? goal.current / goal.target : 0;
+            const currentLabel =
+              goal.unit === 'BRL' ? formatCurrency(goal.current) : `${goal.current}`;
+            const targetLabel = goal.unit === 'BRL' ? formatCurrency(goal.target) : `${goal.target}`;
+            return (
+              <Card key={goal.id} onPress={() => router.push('/goals')} style={styles.goalCard}>
+                <View style={styles.goalHeader}>
+                  <AppText variant="bodyStrong">{goal.title}</AppText>
+                  <AppText variant="caption" color={colors.primary}>
+                    {Math.round(progress * 100)}%
+                  </AppText>
+                </View>
+                <ProgressBar value={progress} />
+                <AppText variant="caption" color={colors.sub}>
+                  {currentLabel} de {targetLabel}
+                </AppText>
+              </Card>
+            );
+          })
+        )}
+      </QueryBoundary>
     </Screen>
   );
 }
@@ -166,19 +195,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: spacing.xl,
   },
-  greeting: { gap: 2 },
-  bellWrapper: { position: 'relative' },
-  unreadDot: {
-    position: 'absolute',
-    top: 2,
-    right: 2,
-    width: 10,
-    height: 10,
-    borderRadius: radius.full,
-    backgroundColor: colors.accent,
-    borderWidth: 2,
-    borderColor: colors.background,
-  },
+  greeting: { gap: 2, flex: 1, paddingRight: spacing.md },
   revenueCard: {
     borderRadius: radius.xl,
     padding: spacing.xxl,
