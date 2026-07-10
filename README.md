@@ -32,6 +32,8 @@ npx expo start
 
 Abra no Expo Go (Android/iOS) ou emulador.
 
+**Antes do primeiro uso:** aplique o schema do banco — veja [supabase/README.md](supabase/README.md). No painel do Supabase, recomenda-se desativar a confirmação de e-mail (Authentication → Providers → Email) para o cadastro entrar direto no app.
+
 ## Variáveis de ambiente
 
 | Variável | Descrição |
@@ -46,17 +48,27 @@ src/
 ├── app/           # rotas (Expo Router)
 │   ├── (auth)/    # fluxo de autenticação e onboarding
 │   ├── (tabs)/    # abas: início, agenda, clientes, financeiro
-│   ├── appointments/, clients/, services/, finance/, profile/
+│   ├── appointments/, clients/, services/, finance/, goals/, profile/
 ├── components/    # componentes de UI reutilizáveis
+├── context/       # sessão e negócio ativo
+├── data/          # camada de acesso ao Supabase
 ├── theme/         # tokens de design (cores, tipografia, espaçamento)
-├── lib/           # supabase, formatadores, helpers
-├── mocks/         # dados de exemplo até o backend estar plugado
+├── lib/           # supabase, formatadores, máscaras, helpers
 └── types/         # tipos de domínio
+
+supabase/
+└── schema.sql     # tabelas, RLS e regras de negócio no banco
 ```
+
+## Regras de negócio
+
+- **Conflito de horário**: a agenda só oferece horários livres do profissional, e o banco garante a exclusividade mesmo em uso simultâneo.
+- **Concluir → cobrar**: marcar um atendimento como concluído lança a receita no financeiro automaticamente (trigger no banco).
+- **Isolamento por conta**: RLS em todas as tabelas — cada profissional só acessa os próprios dados.
 
 ## Próximos passos
 
-- [ ] Modelo de dados no Supabase (tabelas + RLS)
-- [ ] Trocar mocks por queries reais
 - [ ] Lembretes por WhatsApp/push
 - [ ] Link público de agendamento online
+- [ ] Convite de profissionais com login próprio
+- [ ] Assinatura do plano Pro
