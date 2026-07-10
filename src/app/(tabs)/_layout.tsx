@@ -1,8 +1,8 @@
 import { Pressable, StyleSheet, View } from 'react-native';
-import { Tabs, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
+import { Tabs, type BottomTabBarProps } from 'expo-router/js-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
 import { AppText } from '@/components/ui';
 import { colors, radius, shadow, spacing } from '@/theme';
