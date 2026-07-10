@@ -1,4 +1,18 @@
-/** Tipos de domínio do CRM. */
+/** Tipos de domínio do CRM — espelham as tabelas do Supabase em camelCase. */
+
+export interface DaySchedule {
+  day: string;
+  open: boolean;
+  from: string;
+  to: string;
+}
+
+export interface Business {
+  id: string;
+  name: string;
+  segments: string[];
+  schedule: DaySchedule[];
+}
 
 export type AppointmentStatus = 'agendado' | 'confirmado' | 'concluido' | 'cancelado' | 'faltou';
 
@@ -9,9 +23,13 @@ export interface Client {
   email?: string;
   birthday?: string;
   notes?: string;
-  lastVisit?: string;
-  totalSpent: number;
+}
+
+/** Cliente com agregados de histórico (visitas, total gasto, última visita). */
+export interface ClientWithStats extends Client {
   visits: number;
+  totalSpent: number;
+  lastVisit?: string;
 }
 
 export interface Service {
@@ -29,7 +47,8 @@ export interface Appointment {
   clientName: string;
   serviceIds: string[];
   serviceNames: string[];
-  professional: string;
+  professionalId: string;
+  professionalName: string;
   date: string;
   startTime: string;
   endTime: string;
@@ -64,13 +83,4 @@ export interface TeamMember {
   name: string;
   role: string;
   active: boolean;
-}
-
-export interface AppNotification {
-  id: string;
-  title: string;
-  message: string;
-  createdAt: string;
-  read: boolean;
-  kind: 'agendamento' | 'lembrete' | 'financeiro' | 'sistema';
 }

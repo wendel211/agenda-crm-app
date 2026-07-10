@@ -3,6 +3,8 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { AppText, Button, Screen, TextField } from '@/components/ui';
+import { useAuth } from '@/context/auth-context';
+import { createBusiness } from '@/data/business';
 import { colors, radius, spacing } from '@/theme';
 
 const segments = ['Cabelo', 'Unhas', 'Cílios & Sobrancelhas', 'Maquiagem', 'Estética', 'Barbearia'];
@@ -13,23 +15,54 @@ const TOTAL_STEPS = 3;
 
 export default function OnboardingScreen() {
   const router = useRouter();
+  const { session, refreshBusiness } = useAuth();
   const [step, setStep] = useState(0);
   const [businessName, setBusinessName] = useState('');
   const [selectedSegments, setSelectedSegments] = useState<string[]>([]);
   const [opensAt, setOpensAt] = useState('09:00');
   const [closesAt, setClosesAt] = useState('19:00');
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
+  const [error, setError] = useState<string>();
+  const [saving, setSaving] = useState(false);
 
   function toggle(list: string[], value: string, setter: (next: string[]) => void) {
     setter(list.includes(value) ? list.filter((item) => item !== value) : [...list, value]);
   }
 
-  function handleNext() {
+  async function handleNext() {
+    if (step === 0 && !businessName.trim()) {
+      setError('Dê um nome ao seu negócio para continuar.');
+      return;
+    }
+    setError(undefined);
+
     if (step < TOTAL_STEPS - 1) {
       setStep(step + 1);
       return;
     }
-    router.replace('/(tabs)');
+
+    if (!session) {
+      router.replace('/(auth)/welcome');
+      return;
+    }
+    setSaving(true);
+    try {
+      await createBusiness({
+        ownerId: session.user.id,
+        ownerName: (session.user.user_metadata.full_name as string | undefined) ?? 'Você',
+        name: businessName.trim(),
+        segments: selectedSegments,
+        opensAt,
+        closesAt,
+        serviceNames: selectedServices,
+      });
+      await refreshBusiness();
+      router.replace('/(tabs)');
+    } catch {
+      setError('Não foi possível salvar. Verifique sua conexão e tente de novo.');
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -55,6 +88,7 @@ export default function OnboardingScreen() {
             placeholder="Ex.: Estúdio Ana Beleza"
             value={businessName}
             onChangeText={setBusinessName}
+            error={error}
           />
           <AppText variant="caption" color={colors.sub}>
             ÁREAS DE ATUAÇÃO
@@ -153,9 +187,15 @@ export default function OnboardingScreen() {
       ) : null}
 
       <View style={styles.footer}>
+        {step > 0 && error ? (
+          <AppText variant="caption" color={colors.danger} align="center">
+            {error}
+          </AppText>
+        ) : null}
         <Button
           label={step === TOTAL_STEPS - 1 ? 'Concluir e abrir minha agenda' : 'Continuar'}
           onPress={handleNext}
+          loading={saving}
         />
         {step > 0 ? (
           <Button label="Voltar" variant="ghost" onPress={() => setStep(step - 1)} />

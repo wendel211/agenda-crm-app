@@ -27,7 +27,7 @@ export default function LoginScreen() {
       setError('Não foi possível entrar. Confira suas credenciais.');
       return;
     }
-    router.replace('/(tabs)');
+    router.replace('/');
   }
 
   return (
@@ -72,11 +72,6 @@ export default function LoginScreen() {
         </Pressable>
 
         <Button label="Entrar" onPress={handleLogin} loading={loading} />
-        <Button
-          label="Explorar sem conta"
-          variant="soft"
-          onPress={() => router.replace('/(tabs)')}
-        />
       </View>
     </Screen>
   );

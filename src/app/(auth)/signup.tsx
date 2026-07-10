@@ -32,7 +32,7 @@ export default function SignupScreen() {
       setError('Não foi possível criar a conta. Tente novamente.');
       return;
     }
-    router.replace('/(auth)/onboarding');
+    router.replace('/');
   }
 
   return (
