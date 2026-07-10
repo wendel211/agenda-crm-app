@@ -32,7 +32,9 @@ npx expo start
 
 Abra no Expo Go (Android/iOS) ou emulador.
 
-**Antes do primeiro uso:** aplique o schema do banco — veja [supabase/README.md](supabase/README.md). No painel do Supabase, recomenda-se desativar a confirmação de e-mail (Authentication → Providers → Email) para o cadastro entrar direto no app.
+**Antes do primeiro uso:** aplique `supabase/schema.sql` e depois `supabase/schema_v2.sql` no SQL Editor — veja [supabase/README.md](supabase/README.md). No painel do Supabase, recomenda-se desativar a confirmação de e-mail (Authentication → Providers → Email) para o cadastro entrar direto no app.
+
+Testes: `npm test`
 
 ## Variáveis de ambiente
 
@@ -68,7 +70,7 @@ supabase/
 
 ## Próximos passos
 
-- [ ] Lembretes por WhatsApp/push
+- [ ] Push remoto (deploy da edge function `daily-reminders` + tabela de tokens)
 - [ ] Link público de agendamento online
 - [ ] Convite de profissionais com login próprio
-- [ ] Assinatura do plano Pro
+- [ ] Assinatura do plano Pro (RevenueCat)

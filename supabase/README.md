@@ -4,6 +4,7 @@
 
 1. Abra o painel do projeto no Supabase → **SQL Editor**
 2. Cole o conteúdo de [`schema.sql`](./schema.sql) e execute
+3. Em seguida, execute [`schema_v2.sql`](./schema_v2.sql) (notificações, arquivar clientes, fotos)
 
 Ou, com o CLI autenticado (`supabase login` + `supabase link --project-ref qedkqbgcjikrbryjmngc`):
 
