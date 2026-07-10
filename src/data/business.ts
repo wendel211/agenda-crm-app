@@ -89,6 +89,23 @@ export async function createBusiness(input: CreateBusinessInput): Promise<Busine
   return mapBusiness(data);
 }
 
+export async function updateBusiness(
+  businessId: string,
+  changes: { name?: string; segments?: string[]; logoUrl?: string },
+): Promise<void> {
+  const { error } = await supabase
+    .from('businesses')
+    .update({
+      ...(changes.name !== undefined ? { name: changes.name } : {}),
+      ...(changes.segments !== undefined ? { segments: changes.segments } : {}),
+      ...(changes.logoUrl !== undefined ? { logo_url: changes.logoUrl } : {}),
+    })
+    .eq('id', businessId);
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
 export async function updateSchedule(businessId: string, schedule: DaySchedule[]): Promise<void> {
   const { error } = await supabase
     .from('businesses')

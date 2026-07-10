@@ -7,12 +7,13 @@ import {
   AppText,
   Avatar,
   Badge,
+  Button,
   Card,
   IconButton,
   Screen,
   ScreenHeader,
 } from '@/components/ui';
-import { getClient } from '@/data/clients';
+import { getClient, setClientArchived } from '@/data/clients';
 import { listAppointmentsByClient } from '@/data/appointments';
 import { useQuery } from '@/data/use-query';
 import { formatCurrency, formatShortDate, parseISODate } from '@/lib/format';
@@ -124,6 +125,17 @@ export default function ClientProfileScreen() {
               </Card>
             ) : null}
 
+            <Button
+              label={client.archived ? 'Reativar cliente' : 'Arquivar cliente'}
+              variant={client.archived ? 'soft' : 'danger'}
+              size="md"
+              onPress={async () => {
+                await setClientArchived(client.id, !client.archived);
+                await refetch();
+              }}
+              style={styles.archiveButton}
+            />
+
             <AppText variant="heading" style={styles.historyTitle}>
               Histórico
             </AppText>
@@ -170,6 +182,7 @@ const styles = StyleSheet.create({
   statCard: { flex: 1, alignItems: 'center', gap: 2, paddingHorizontal: spacing.sm },
   notes: { marginTop: spacing.lg, gap: spacing.sm },
   notesHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  archiveButton: { marginTop: spacing.xl },
   historyTitle: { marginTop: spacing.xxl, marginBottom: spacing.md },
   historyCard: {
     flexDirection: 'row',

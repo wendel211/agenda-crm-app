@@ -28,7 +28,7 @@ export default function ProfileScreen() {
     <Screen>
       <ScreenHeader title="Perfil e ajustes" />
 
-      <Card style={styles.profileCard}>
+      <Card onPress={() => router.push('/profile/edit-business')} style={styles.profileCard}>
         <Avatar name={business.name} size={56} />
         <View style={styles.profileInfo}>
           <AppText variant="heading">{business.name}</AppText>

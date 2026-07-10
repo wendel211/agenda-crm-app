@@ -8,6 +8,8 @@ interface ClientRow {
   email: string | null;
   birthday: string | null;
   notes: string | null;
+  archived: boolean;
+  avatar_url: string | null;
 }
 
 function mapClient(row: ClientRow): Client {
@@ -18,15 +20,22 @@ function mapClient(row: ClientRow): Client {
     email: row.email ?? undefined,
     birthday: row.birthday ?? undefined,
     notes: row.notes ?? undefined,
+    archived: row.archived,
+    avatarUrl: row.avatar_url ?? undefined,
   };
 }
 
-const COLUMNS = 'id, name, phone, email, birthday, notes';
+const COLUMNS = 'id, name, phone, email, birthday, notes, archived, avatar_url';
 
 /** Lista clientes com visitas/total gasto agregados dos atendimentos concluídos. */
 export async function listClientsWithStats(businessId: string): Promise<ClientWithStats[]> {
   const [clientsResult, appointmentsResult] = await Promise.all([
-    supabase.from('clients').select(COLUMNS).eq('business_id', businessId).order('name'),
+    supabase
+      .from('clients')
+      .select(COLUMNS)
+      .eq('business_id', businessId)
+      .eq('archived', false)
+      .order('name'),
     supabase
       .from('appointments')
       .select('client_id, price, date')
@@ -96,6 +105,21 @@ interface SaveClientInput {
   email?: string;
   birthday?: string;
   notes?: string;
+}
+
+/** Arquivar preserva o histórico; o cliente some da lista e do agendamento. */
+export async function setClientArchived(id: string, archived: boolean): Promise<void> {
+  const { error } = await supabase.from('clients').update({ archived }).eq('id', id);
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
+export async function setClientAvatar(id: string, avatarUrl: string): Promise<void> {
+  const { error } = await supabase.from('clients').update({ avatar_url: avatarUrl }).eq('id', id);
+  if (error) {
+    throw new Error(error.message);
+  }
 }
 
 export async function saveClient(input: SaveClientInput): Promise<void> {

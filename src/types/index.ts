@@ -23,6 +23,8 @@ export interface Client {
   email?: string;
   birthday?: string;
   notes?: string;
+  archived: boolean;
+  avatarUrl?: string;
 }
 
 /** Cliente com agregados de histórico (visitas, total gasto, última visita). */
