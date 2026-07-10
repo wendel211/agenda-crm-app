@@ -1,30 +1,80 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { AppText, Button, Screen, ScreenHeader, TextField } from '@/components/ui';
+import { useBusiness } from '@/context/auth-context';
+import { getClient, saveClient } from '@/data/clients';
+import { dateMaskToISO, maskDate, maskPhone } from '@/lib/masks';
 import { colors, spacing } from '@/theme';
 
-export default function NewClientScreen() {
+function isoToDateMask(iso?: string): string {
+  if (!iso) {
+    return '';
+  }
+  const [year, month, day] = iso.split('-');
+  return `${day}/${month}/${year}`;
+}
+
+export default function ClientFormScreen() {
   const router = useRouter();
+  const business = useBusiness();
+  const { id } = useLocalSearchParams<{ id?: string }>();
+
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [birthday, setBirthday] = useState('');
   const [notes, setNotes] = useState('');
   const [error, setError] = useState<string>();
+  const [saving, setSaving] = useState(false);
 
-  function handleSave() {
-    if (!name.trim() || !phone.trim()) {
-      setError('Nome e telefone são obrigatórios.');
+  useEffect(() => {
+    if (!id) {
       return;
     }
-    router.back();
+    getClient(id).then((client) => {
+      if (client) {
+        setName(client.name);
+        setPhone(client.phone);
+        setEmail(client.email ?? '');
+        setBirthday(isoToDateMask(client.birthday));
+        setNotes(client.notes ?? '');
+      }
+    });
+  }, [id]);
+
+  async function handleSave() {
+    if (!name.trim() || phone.replace(/\D/g, '').length < 10) {
+      setError('Informe o nome e um telefone válido com DDD.');
+      return;
+    }
+    setError(undefined);
+    setSaving(true);
+    try {
+      await saveClient({
+        id,
+        businessId: business.id,
+        name: name.trim(),
+        phone,
+        email: email.trim() || undefined,
+        birthday: dateMaskToISO(birthday),
+        notes: notes.trim() || undefined,
+      });
+      router.back();
+    } catch {
+      setError('Não foi possível salvar. Tente novamente.');
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
     <Screen>
-      <ScreenHeader title="Novo cliente" subtitle="Só nome e telefone já bastam para começar" />
+      <ScreenHeader
+        title={id ? 'Editar cliente' : 'Novo cliente'}
+        subtitle="Só nome e telefone já bastam para começar"
+      />
 
       <View style={styles.form}>
         <TextField
@@ -41,7 +91,7 @@ export default function NewClientScreen() {
           placeholder="(11) 90000-0000"
           keyboardType="phone-pad"
           value={phone}
-          onChangeText={setPhone}
+          onChangeText={(value) => setPhone(maskPhone(value))}
         />
         <TextField
           label="E-mail (opcional)"
@@ -55,9 +105,10 @@ export default function NewClientScreen() {
         <TextField
           label="Aniversário (opcional)"
           icon="gift-outline"
-          placeholder="DD/MM"
+          placeholder="DD/MM/AAAA"
+          keyboardType="number-pad"
           value={birthday}
-          onChangeText={setBirthday}
+          onChangeText={(value) => setBirthday(maskDate(value))}
         />
         <TextField
           label="Ficha / observações (opcional)"
@@ -72,7 +123,7 @@ export default function NewClientScreen() {
           Dica: use a ficha para anotar fórmulas de coloração e preferências — ela aparece no perfil e em cada atendimento.
         </AppText>
 
-        <Button label="Salvar cliente" onPress={handleSave} />
+        <Button label="Salvar cliente" onPress={handleSave} loading={saving} />
       </View>
     </Screen>
   );

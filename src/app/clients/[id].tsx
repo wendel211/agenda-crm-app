@@ -2,6 +2,7 @@ import { Linking, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
+import { QueryBoundary } from '@/components/query-boundary';
 import {
   AppText,
   Avatar,
@@ -11,34 +12,34 @@ import {
   Screen,
   ScreenHeader,
 } from '@/components/ui';
+import { getClient } from '@/data/clients';
+import { listAppointmentsByClient } from '@/data/appointments';
+import { useQuery } from '@/data/use-query';
 import { formatCurrency, formatShortDate, parseISODate } from '@/lib/format';
 import { statusMeta } from '@/lib/appointment-status';
-import { mockAppointments, mockClients } from '@/mocks';
 import { colors, spacing } from '@/theme';
 
 export default function ClientProfileScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const client = mockClients.find((item) => item.id === id);
 
-  if (!client) {
-    return (
-      <Screen>
-        <ScreenHeader title="Cliente" />
-        <AppText variant="body" color={colors.sub}>
-          Cliente não encontrado.
-        </AppText>
-      </Screen>
-    );
-  }
+  const { data, loading, error, refetch } = useQuery(
+    async () => {
+      const [client, history] = await Promise.all([getClient(id), listAppointmentsByClient(id)]);
+      return { client, history };
+    },
+    [id],
+  );
 
-  const history = mockAppointments
-    .filter((item) => item.clientId === client.id)
-    .sort((a, b) => b.date.localeCompare(a.date));
-  const ticket = client.visits > 0 ? client.totalSpent / client.visits : 0;
+  const client = data?.client;
+  const history = data?.history ?? [];
+  const ticket = client && client.visits > 0 ? client.totalSpent / client.visits : 0;
 
   function openWhatsApp() {
-    const phone = client!.phone.replace(/\D/g, '');
+    if (!client) {
+      return;
+    }
+    const phone = client.phone.replace(/\D/g, '');
     Linking.openURL(`https://wa.me/55${phone}`);
   }
 
@@ -46,100 +47,118 @@ export default function ClientProfileScreen() {
     <Screen>
       <ScreenHeader
         title="Perfil do cliente"
-        right={<IconButton icon="create-outline" label="Editar" onPress={() => router.push('/clients/new')} />}
+        right={
+          client ? (
+            <IconButton
+              icon="create-outline"
+              label="Editar"
+              onPress={() => router.push(`/clients/new?id=${client.id}`)}
+            />
+          ) : undefined
+        }
       />
 
-      <View style={styles.hero}>
-        <Avatar name={client.name} size={72} />
-        <AppText variant="title">{client.name}</AppText>
-        <AppText variant="caption" color={colors.sub}>
-          {client.phone}
-          {client.email ? ` · ${client.email}` : ''}
-        </AppText>
-        <View style={styles.heroActions}>
-          <IconButton icon="logo-whatsapp" label="WhatsApp" tone="primary" onPress={openWhatsApp} />
-          <IconButton
-            icon="calendar-outline"
-            label="Agendar"
-            tone="primary"
-            onPress={() => router.push('/appointments/new')}
-          />
-        </View>
-      </View>
-
-      <View style={styles.stats}>
-        <Card style={styles.statCard}>
-          <AppText variant="heading" color={colors.primary}>
-            {client.visits}
-          </AppText>
-          <AppText variant="caption" color={colors.sub}>
-            Visitas
-          </AppText>
-        </Card>
-        <Card style={styles.statCard}>
-          <AppText variant="heading" color={colors.success}>
-            {formatCurrency(client.totalSpent)}
-          </AppText>
-          <AppText variant="caption" color={colors.sub}>
-            Total gasto
-          </AppText>
-        </Card>
-        <Card style={styles.statCard}>
-          <AppText variant="heading" color={colors.accent}>
-            {formatCurrency(ticket)}
-          </AppText>
-          <AppText variant="caption" color={colors.sub}>
-            Ticket médio
-          </AppText>
-        </Card>
-      </View>
-
-      {client.notes ? (
-        <Card style={styles.notes}>
-          <View style={styles.notesHeader}>
-            <Ionicons name="document-text-outline" size={16} color={colors.primary} />
-            <AppText variant="caption" color={colors.primary}>
-              FICHA DA CLIENTE
-            </AppText>
-          </View>
+      <QueryBoundary loading={loading} error={error} onRetry={refetch}>
+        {!client ? (
           <AppText variant="body" color={colors.sub}>
-            {client.notes}
+            Cliente não encontrado.
           </AppText>
-        </Card>
-      ) : null}
+        ) : (
+          <>
+            <View style={styles.hero}>
+              <Avatar name={client.name} size={72} />
+              <AppText variant="title">{client.name}</AppText>
+              <AppText variant="caption" color={colors.sub}>
+                {client.phone}
+                {client.email ? ` · ${client.email}` : ''}
+              </AppText>
+              <View style={styles.heroActions}>
+                <IconButton icon="logo-whatsapp" label="WhatsApp" tone="primary" onPress={openWhatsApp} />
+                <IconButton
+                  icon="calendar-outline"
+                  label="Agendar"
+                  tone="primary"
+                  onPress={() => router.push('/appointments/new')}
+                />
+              </View>
+            </View>
 
-      <AppText variant="heading" style={styles.historyTitle}>
-        Histórico
-      </AppText>
-      {history.length === 0 ? (
-        <AppText variant="body" color={colors.sub}>
-          Nenhum atendimento registrado ainda.
-        </AppText>
-      ) : (
-        history.map((appointment) => {
-          const meta = statusMeta[appointment.status];
-          return (
-            <Card
-              key={appointment.id}
-              onPress={() => router.push(`/appointments/${appointment.id}`)}
-              style={styles.historyCard}
-            >
-              <View style={styles.historyInfo}>
-                <AppText variant="bodyStrong" numberOfLines={1}>
-                  {appointment.serviceNames.join(' + ')}
+            <View style={styles.stats}>
+              <Card style={styles.statCard}>
+                <AppText variant="heading" color={colors.primary}>
+                  {client.visits}
                 </AppText>
                 <AppText variant="caption" color={colors.sub}>
-                  {formatShortDate(parseISODate(appointment.date))} · {appointment.startTime}
+                  Visitas
                 </AppText>
-              </View>
-              <View style={styles.historyRight}>
-                <AppText variant="subheading">{formatCurrency(appointment.price)}</AppText>
-                <Badge label={meta.label} tone={meta.tone} />
-              </View>
-            </Card>
-          );
-        })
-      )}
+              </Card>
+              <Card style={styles.statCard}>
+                <AppText variant="heading" color={colors.success}>
+                  {formatCurrency(client.totalSpent)}
+                </AppText>
+                <AppText variant="caption" color={colors.sub}>
+                  Total gasto
+                </AppText>
+              </Card>
+              <Card style={styles.statCard}>
+                <AppText variant="heading" color={colors.accent}>
+                  {formatCurrency(ticket)}
+                </AppText>
+                <AppText variant="caption" color={colors.sub}>
+                  Ticket médio
+                </AppText>
+              </Card>
+            </View>
+
+            {client.notes ? (
+              <Card style={styles.notes}>
+                <View style={styles.notesHeader}>
+                  <Ionicons name="document-text-outline" size={16} color={colors.primary} />
+                  <AppText variant="caption" color={colors.primary}>
+                    FICHA DA CLIENTE
+                  </AppText>
+                </View>
+                <AppText variant="body" color={colors.sub}>
+                  {client.notes}
+                </AppText>
+              </Card>
+            ) : null}
+
+            <AppText variant="heading" style={styles.historyTitle}>
+              Histórico
+            </AppText>
+            {history.length === 0 ? (
+              <AppText variant="body" color={colors.sub}>
+                Nenhum atendimento registrado ainda.
+              </AppText>
+            ) : (
+              history.map((appointment) => {
+                const meta = statusMeta[appointment.status];
+                return (
+                  <Card
+                    key={appointment.id}
+                    onPress={() => router.push(`/appointments/${appointment.id}`)}
+                    style={styles.historyCard}
+                  >
+                    <View style={styles.historyInfo}>
+                      <AppText variant="bodyStrong" numberOfLines={1}>
+                        {appointment.serviceNames.join(' + ')}
+                      </AppText>
+                      <AppText variant="caption" color={colors.sub}>
+                        {formatShortDate(parseISODate(appointment.date))} · {appointment.startTime}
+                      </AppText>
+                    </View>
+                    <View style={styles.historyRight}>
+                      <AppText variant="subheading">{formatCurrency(appointment.price)}</AppText>
+                      <Badge label={meta.label} tone={meta.tone} />
+                    </View>
+                  </Card>
+                );
+              })
+            )}
+          </>
+        )}
+      </QueryBoundary>
     </Screen>
   );
 }

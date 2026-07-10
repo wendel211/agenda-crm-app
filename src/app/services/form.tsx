@@ -1,9 +1,12 @@
-import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Pressable, StyleSheet, Switch, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { AppText, Button, Screen, ScreenHeader, TextField } from '@/components/ui';
+import { useBusiness } from '@/context/auth-context';
+import { getService, saveService } from '@/data/services';
 import { formatDuration } from '@/lib/format';
+import { maskCurrency, parseCurrency } from '@/lib/masks';
 import { colors, radius, spacing } from '@/theme';
 
 const durations = [30, 40, 45, 60, 90, 120, 150];
@@ -11,14 +14,63 @@ const palette = ['#6C5CE7', '#FF5C8A', '#00C39A', '#FFAA2B', '#3E8BFF', '#FF5A5F
 
 export default function ServiceFormScreen() {
   const router = useRouter();
+  const business = useBusiness();
+  const { id } = useLocalSearchParams<{ id?: string }>();
+
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [duration, setDuration] = useState(60);
   const [color, setColor] = useState(palette[0]);
+  const [active, setActive] = useState(true);
+  const [error, setError] = useState<string>();
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!id) {
+      return;
+    }
+    getService(id).then((service) => {
+      if (service) {
+        setName(service.name);
+        setPrice(maskCurrency(String(Math.round(service.price * 100))));
+        setDuration(service.durationMinutes);
+        setColor(service.color);
+        setActive(service.active);
+      }
+    });
+  }, [id]);
+
+  async function handleSave() {
+    if (!name.trim()) {
+      setError('Dê um nome ao serviço.');
+      return;
+    }
+    setError(undefined);
+    setSaving(true);
+    try {
+      await saveService({
+        id,
+        businessId: business.id,
+        name: name.trim(),
+        durationMinutes: duration,
+        price: parseCurrency(price),
+        color,
+        active,
+      });
+      router.back();
+    } catch {
+      setError('Não foi possível salvar. Tente novamente.');
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <Screen>
-      <ScreenHeader title="Serviço" subtitle="Nome, preço, duração e cor na agenda" />
+      <ScreenHeader
+        title={id ? 'Editar serviço' : 'Novo serviço'}
+        subtitle="Nome, preço, duração e cor na agenda"
+      />
 
       <View style={styles.form}>
         <TextField
@@ -27,14 +79,15 @@ export default function ServiceFormScreen() {
           placeholder="Ex.: Corte feminino"
           value={name}
           onChangeText={setName}
+          error={error}
         />
         <TextField
           label="Preço"
           icon="cash-outline"
           placeholder="R$ 0,00"
-          keyboardType="decimal-pad"
+          keyboardType="number-pad"
           value={price}
-          onChangeText={setPrice}
+          onChangeText={(value) => setPrice(maskCurrency(value))}
         />
 
         <AppText variant="caption" color={colors.sub}>
@@ -82,7 +135,24 @@ export default function ServiceFormScreen() {
           })}
         </View>
 
-        <Button label="Salvar serviço" onPress={() => router.back()} />
+        {id ? (
+          <View style={styles.activeRow}>
+            <View style={styles.activeTexts}>
+              <AppText variant="bodyStrong">Serviço ativo</AppText>
+              <AppText variant="caption" color={colors.sub}>
+                Serviços inativos não aparecem no agendamento
+              </AppText>
+            </View>
+            <Switch
+              value={active}
+              onValueChange={setActive}
+              trackColor={{ false: colors.border, true: colors.primary }}
+              thumbColor={colors.surface}
+            />
+          </View>
+        ) : null}
+
+        <Button label="Salvar serviço" onPress={handleSave} loading={saving} />
       </View>
     </Screen>
   );
@@ -113,4 +183,10 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: colors.ink,
   },
+  activeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  activeTexts: { flex: 1, gap: 2 },
 });

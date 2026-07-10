@@ -1,21 +1,31 @@
 import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
+import { QueryBoundary } from '@/components/query-boundary';
 import {
   AppText,
   Badge,
   Card,
+  EmptyState,
   IconButton,
   Screen,
   ScreenHeader,
 } from '@/components/ui';
+import { useBusiness } from '@/context/auth-context';
+import { listServices } from '@/data/services';
+import { useQuery } from '@/data/use-query';
 import { formatCurrency, formatDuration } from '@/lib/format';
-import { mockServices } from '@/mocks';
 import { colors, radius, spacing } from '@/theme';
 
 export default function ServicesScreen() {
   const router = useRouter();
-  const sorted = [...mockServices].sort((a, b) => Number(b.active) - Number(a.active));
+  const business = useBusiness();
+  const { data, loading, error, refetch } = useQuery(
+    () => listServices(business.id),
+    [business.id],
+  );
+
+  const sorted = [...(data ?? [])].sort((a, b) => Number(b.active) - Number(a.active));
 
   return (
     <Screen>
@@ -32,27 +42,39 @@ export default function ServicesScreen() {
         }
       />
 
-      {sorted.map((service) => (
-        <Card
-          key={service.id}
-          onPress={() => router.push('/services/form')}
-          style={[styles.card, service.active ? null : styles.inactive]}
-        >
-          <View style={[styles.colorBar, { backgroundColor: service.color }]} />
-          <View style={styles.info}>
-            <AppText variant="bodyStrong">{service.name}</AppText>
-            <AppText variant="caption" color={colors.sub}>
-              {formatDuration(service.durationMinutes)}
-            </AppText>
-          </View>
-          <View style={styles.right}>
-            <AppText variant="subheading" color={colors.primary}>
-              {formatCurrency(service.price)}
-            </AppText>
-            {service.active ? null : <Badge label="Inativo" tone="neutral" />}
-          </View>
-        </Card>
-      ))}
+      <QueryBoundary loading={loading} error={error} onRetry={refetch}>
+        {sorted.length === 0 ? (
+          <EmptyState
+            icon="cut-outline"
+            title="Nenhum serviço ainda"
+            message="Cadastre seus serviços com preço e duração para liberar a agenda."
+            actionLabel="Cadastrar serviço"
+            onAction={() => router.push('/services/form')}
+          />
+        ) : (
+          sorted.map((service) => (
+            <Card
+              key={service.id}
+              onPress={() => router.push(`/services/form?id=${service.id}`)}
+              style={[styles.card, service.active ? null : styles.inactive]}
+            >
+              <View style={[styles.colorBar, { backgroundColor: service.color }]} />
+              <View style={styles.info}>
+                <AppText variant="bodyStrong">{service.name}</AppText>
+                <AppText variant="caption" color={colors.sub}>
+                  {formatDuration(service.durationMinutes)}
+                </AppText>
+              </View>
+              <View style={styles.right}>
+                <AppText variant="subheading" color={colors.primary}>
+                  {formatCurrency(service.price)}
+                </AppText>
+                {service.active ? null : <Badge label="Inativo" tone="neutral" />}
+              </View>
+            </Card>
+          ))
+        )}
+      </QueryBoundary>
     </Screen>
   );
 }
