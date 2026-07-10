@@ -70,7 +70,18 @@ export default function AppointmentDetailScreen() {
 
   return (
     <Screen>
-      <ScreenHeader title="Agendamento" />
+      <ScreenHeader
+        title="Agendamento"
+        right={
+          appointment && (appointment.status === 'agendado' || appointment.status === 'confirmado') ? (
+            <IconButton
+              icon="create-outline"
+              label="Remarcar ou editar"
+              onPress={() => router.push(`/appointments/new?id=${id}`)}
+            />
+          ) : undefined
+        }
+      />
 
       <QueryBoundary loading={loading} error={error} onRetry={refetch}>
         {!appointment || !meta ? (

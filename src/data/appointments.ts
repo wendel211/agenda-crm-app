@@ -97,17 +97,25 @@ export async function getAppointment(id: string): Promise<Appointment | null> {
   return data ? mapAppointment(data as unknown as AppointmentRow) : null;
 }
 
-/** Intervalos ocupados de um profissional no dia (para desabilitar horários na UI). */
+/**
+ * Intervalos ocupados de um profissional no dia (para desabilitar horários na UI).
+ * `excludeId` ignora o próprio agendamento ao remarcar.
+ */
 export async function listBusyRanges(
   professionalId: string,
   date: string,
+  excludeId?: string,
 ): Promise<{ start: string; end: string }[]> {
-  const { data, error } = await supabase
+  let query = supabase
     .from('appointments')
     .select('start_time, end_time')
     .eq('professional_id', professionalId)
     .eq('date', date)
     .in('status', ['agendado', 'confirmado']);
+  if (excludeId) {
+    query = query.neq('id', excludeId);
+  }
+  const { data, error } = await query;
   if (error) {
     throw new Error(error.message);
   }
@@ -156,6 +164,42 @@ export async function createAppointment(input: CreateAppointmentInput): Promise<
   if (junctionError) {
     // Não deixa agendamento órfão de serviços.
     await supabase.from('appointments').delete().eq('id', data.id);
+    throw new Error(junctionError.message);
+  }
+}
+
+/** Remarcar/editar: atualiza o agendamento e substitui os serviços vinculados. */
+export async function updateAppointment(id: string, input: CreateAppointmentInput): Promise<void> {
+  const { error } = await supabase
+    .from('appointments')
+    .update({
+      client_id: input.clientId,
+      professional_id: input.professionalId,
+      date: input.date,
+      start_time: input.startTime,
+      end_time: input.endTime,
+      price: input.price,
+      notes: input.notes || null,
+    })
+    .eq('id', id);
+  if (error) {
+    if (error.code === OVERLAP_ERROR_CODE) {
+      throw new Error('Esse horário conflita com outro atendimento do profissional.');
+    }
+    throw new Error(error.message);
+  }
+
+  const { error: clearError } = await supabase
+    .from('appointment_services')
+    .delete()
+    .eq('appointment_id', id);
+  if (clearError) {
+    throw new Error(clearError.message);
+  }
+  const { error: junctionError } = await supabase.from('appointment_services').insert(
+    input.serviceIds.map((serviceId) => ({ appointment_id: id, service_id: serviceId })),
+  );
+  if (junctionError) {
     throw new Error(junctionError.message);
   }
 }

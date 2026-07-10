@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { QueryBoundary } from '@/components/query-boundary';
 import {
@@ -14,12 +14,17 @@ import {
   TextField,
 } from '@/components/ui';
 import { useBusiness } from '@/context/auth-context';
-import { createAppointment, listBusyRanges } from '@/data/appointments';
+import {
+  createAppointment,
+  getAppointment,
+  listBusyRanges,
+  updateAppointment,
+} from '@/data/appointments';
 import { listClientsWithStats } from '@/data/clients';
 import { listServices } from '@/data/services';
 import { listTeam } from '@/data/team';
 import { useQuery } from '@/data/use-query';
-import { formatCurrency, formatDuration, toISODate } from '@/lib/format';
+import { formatCurrency, formatDuration, parseISODate, toISODate } from '@/lib/format';
 import { minutesToTime, overlapsAny, timeToMinutes, weekdayName } from '@/lib/time';
 import { colors, radius, spacing } from '@/theme';
 
@@ -29,6 +34,7 @@ const weekdayShort = new Intl.DateTimeFormat('pt-BR', { weekday: 'short' });
 export default function NewAppointmentScreen() {
   const router = useRouter();
   const business = useBusiness();
+  const { id } = useLocalSearchParams<{ id?: string }>();
 
   const [clientId, setClientId] = useState<string>();
   const [serviceIds, setServiceIds] = useState<string[]>([]);
@@ -52,31 +58,56 @@ export default function NewAppointmentScreen() {
   );
 
   const busy = useQuery(
-    () => (professionalId ? listBusyRanges(professionalId, date) : Promise.resolve([])),
-    [professionalId, date],
+    () => (professionalId ? listBusyRanges(professionalId, date, id) : Promise.resolve([])),
+    [professionalId, date, id],
   );
 
-  // Primeiro profissional ativo pré-selecionado.
+  // Edição: pré-carrega o agendamento existente.
+  useEffect(() => {
+    if (!id) {
+      return;
+    }
+    getAppointment(id).then((appointment) => {
+      if (appointment) {
+        setClientId(appointment.clientId);
+        setServiceIds(appointment.serviceIds);
+        setDate(appointment.date);
+        setTime(appointment.startTime);
+        setProfessionalId(appointment.professionalId);
+        setNotes(appointment.notes ?? '');
+      }
+    });
+  }, [id]);
+
+  // Primeiro profissional ativo pré-selecionado (apenas ao criar).
   useEffect(() => {
     const first = base.data?.team[0];
-    if (first && !professionalId) {
+    if (first && !professionalId && !id) {
       setProfessionalId(first.id);
     }
-  }, [base.data, professionalId]);
+  }, [base.data, professionalId, id]);
 
-  const days = useMemo(
-    () =>
-      Array.from({ length: 10 }, (_, offset) => {
-        const value = new Date();
-        value.setDate(value.getDate() + offset);
-        return {
-          iso: toISODate(value),
-          weekday: weekdayShort.format(value).replace('.', ''),
-          day: value.getDate(),
-        };
-      }),
-    [],
-  );
+  const days = useMemo(() => {
+    const result = Array.from({ length: 10 }, (_, offset) => {
+      const value = new Date();
+      value.setDate(value.getDate() + offset);
+      return {
+        iso: toISODate(value),
+        weekday: weekdayShort.format(value).replace('.', ''),
+        day: value.getDate(),
+      };
+    });
+    // Ao remarcar, garante que a data atual do agendamento apareça na faixa.
+    if (!result.some((item) => item.iso === date)) {
+      const parsed = parseISODate(date);
+      result.push({
+        iso: date,
+        weekday: weekdayShort.format(parsed).replace('.', ''),
+        day: parsed.getDate(),
+      });
+    }
+    return result;
+  }, [date]);
 
   const services = base.data?.services.filter((service) => service.active) ?? [];
   const selectedServices = services.filter((service) => serviceIds.includes(service.id));
@@ -124,18 +155,23 @@ export default function NewAppointmentScreen() {
     }
     setError(undefined);
     setSaving(true);
+    const input = {
+      businessId: business.id,
+      clientId,
+      professionalId,
+      serviceIds,
+      date,
+      startTime: time,
+      endTime: minutesToTime(timeToMinutes(time) + totalMinutes),
+      price: total,
+      notes: notes.trim() || undefined,
+    };
     try {
-      await createAppointment({
-        businessId: business.id,
-        clientId,
-        professionalId,
-        serviceIds,
-        date,
-        startTime: time,
-        endTime: minutesToTime(timeToMinutes(time) + totalMinutes),
-        price: total,
-        notes: notes.trim() || undefined,
-      });
+      if (id) {
+        await updateAppointment(id, input);
+      } else {
+        await createAppointment(input);
+      }
       router.back();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Não foi possível agendar.');
@@ -145,7 +181,7 @@ export default function NewAppointmentScreen() {
 
   return (
     <Screen>
-      <ScreenHeader title="Novo agendamento" />
+      <ScreenHeader title={id ? 'Remarcar / editar' : 'Novo agendamento'} />
 
       <QueryBoundary loading={base.loading} error={base.error} onRetry={base.refetch}>
         {base.data && base.data.services.length === 0 ? (
@@ -362,7 +398,7 @@ export default function NewAppointmentScreen() {
             ) : null}
 
             <Button
-              label="Confirmar agendamento"
+              label={id ? 'Salvar alterações' : 'Confirmar agendamento'}
               onPress={handleSave}
               disabled={!canSave}
               loading={saving}
