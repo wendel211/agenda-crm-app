@@ -3,9 +3,13 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { AppointmentCard } from '@/components/appointment-card';
+import { QueryBoundary } from '@/components/query-boundary';
 import { AppText, EmptyState, Screen } from '@/components/ui';
+import { useBusiness } from '@/context/auth-context';
+import { listAppointmentsByDate } from '@/data/appointments';
+import { listTeam } from '@/data/team';
+import { useQuery } from '@/data/use-query';
 import { formatCurrency, toISODate } from '@/lib/format';
-import { mockAppointments, mockTeam } from '@/mocks';
 import { colors, radius, spacing } from '@/theme';
 
 const DAYS_AHEAD = 14;
@@ -31,15 +35,21 @@ function buildDays(): DayOption[] {
 
 export default function AgendaScreen() {
   const router = useRouter();
+  const business = useBusiness();
   const days = useMemo(buildDays, []);
   const [selectedDay, setSelectedDay] = useState(days[0].iso);
-  const [professional, setProfessional] = useState<string>('todos');
+  const [professionalId, setProfessionalId] = useState<string>('todos');
 
-  const activeTeam = mockTeam.filter((member) => member.active);
-  const dayAppointments = mockAppointments
-    .filter((item) => item.date === selectedDay)
-    .filter((item) => professional === 'todos' || item.professional === professional)
-    .sort((a, b) => a.startTime.localeCompare(b.startTime));
+  const team = useQuery(() => listTeam(business.id), [business.id]);
+  const { data, loading, error, refetch } = useQuery(
+    () => listAppointmentsByDate(business.id, selectedDay),
+    [business.id, selectedDay],
+  );
+
+  const activeTeam = (team.data ?? []).filter((member) => member.active);
+  const dayAppointments = (data ?? []).filter(
+    (item) => professionalId === 'todos' || item.professionalId === professionalId,
+  );
   const dayTotal = dayAppointments
     .filter((item) => item.status !== 'cancelado' && item.status !== 'faltou')
     .reduce((sum, item) => sum + item.price, 0);
@@ -80,48 +90,49 @@ export default function AgendaScreen() {
         })}
       </ScrollView>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.filterStrip}
-        style={styles.filterScroll}
-      >
-        {['todos', ...activeTeam.map((member) => member.name)].map((option) => {
-          const selected = professional === option;
-          return (
-            <Pressable
-              key={option}
-              accessibilityRole="button"
-              accessibilityState={{ selected }}
-              onPress={() => setProfessional(option)}
-              style={[styles.filterChip, selected ? styles.filterChipSelected : null]}
-            >
-              <AppText variant="caption" color={selected ? colors.primary : colors.sub}>
-                {option === 'todos' ? 'Todos' : option}
-              </AppText>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
+      {activeTeam.length > 1 ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterStrip}
+          style={styles.filterScroll}
+        >
+          {[{ id: 'todos', name: 'Todos' }, ...activeTeam].map((option) => {
+            const selected = professionalId === option.id;
+            return (
+              <Pressable
+                key={option.id}
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
+                onPress={() => setProfessionalId(option.id)}
+                style={[styles.filterChip, selected ? styles.filterChipSelected : null]}
+              >
+                <AppText variant="caption" color={selected ? colors.primary : colors.sub}>
+                  {option.name}
+                </AppText>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      ) : null}
 
-      <ScrollView
-        contentContainerStyle={styles.list}
-        showsVerticalScrollIndicator={false}
-      >
-        {dayAppointments.length === 0 ? (
-          <EmptyState
-            icon="calendar-outline"
-            title="Nada por aqui"
-            message="Nenhum atendimento para este dia. Aproveite para divulgar seus horários livres."
-            actionLabel="Novo agendamento"
-            onAction={() => router.push('/appointments/new')}
-          />
-        ) : (
-          dayAppointments.map((appointment) => (
-            <AppointmentCard key={appointment.id} appointment={appointment} />
-          ))
-        )}
-      </ScrollView>
+      <QueryBoundary loading={loading} error={error} onRetry={refetch}>
+        <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
+          {dayAppointments.length === 0 ? (
+            <EmptyState
+              icon="calendar-outline"
+              title="Nada por aqui"
+              message="Nenhum atendimento para este dia. Aproveite para divulgar seus horários livres."
+              actionLabel="Novo agendamento"
+              onAction={() => router.push('/appointments/new')}
+            />
+          ) : (
+            dayAppointments.map((appointment) => (
+              <AppointmentCard key={appointment.id} appointment={appointment} />
+            ))
+          )}
+        </ScrollView>
+      </QueryBoundary>
     </Screen>
   );
 }
