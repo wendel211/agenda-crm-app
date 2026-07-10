@@ -13,7 +13,7 @@ import {
   ScreenHeader,
 } from '@/components/ui';
 import { useBusiness } from '@/context/auth-context';
-import { listGoals } from '@/data/goals';
+import { listGoalsWithProgress } from '@/data/goals';
 import { useQuery } from '@/data/use-query';
 import { formatCurrency, formatShortDate, parseISODate } from '@/lib/format';
 import { colors, spacing } from '@/theme';
@@ -21,7 +21,10 @@ import { colors, spacing } from '@/theme';
 export default function GoalsScreen() {
   const router = useRouter();
   const business = useBusiness();
-  const { data, loading, error, refetch } = useQuery(() => listGoals(business.id), [business.id]);
+  const { data, loading, error, refetch } = useQuery(
+    () => listGoalsWithProgress(business.id),
+    [business.id],
+  );
   const goals = data ?? [];
 
   return (

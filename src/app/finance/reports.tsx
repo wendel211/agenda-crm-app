@@ -1,4 +1,5 @@
-import { StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { QueryBoundary } from '@/components/query-boundary';
 import { AppText, Card, EmptyState, ProgressBar, Screen, ScreenHeader } from '@/components/ui';
@@ -8,23 +9,24 @@ import { listServices } from '@/data/services';
 import { listTransactions } from '@/data/transactions';
 import { useQuery } from '@/data/use-query';
 import { formatCurrency } from '@/lib/format';
-import { colors, spacing } from '@/theme';
+import { colors, radius, spacing } from '@/theme';
 
-const PERIOD_DAYS = 30;
+const PERIOD_OPTIONS = [7, 30, 90] as const;
 
 export default function ReportsScreen() {
   const business = useBusiness();
+  const [periodDays, setPeriodDays] = useState<number>(30);
 
   const { data, loading, error, refetch } = useQuery(
     async () => {
       const [appointments, services, transactions] = await Promise.all([
-        listRecentAppointments(business.id, PERIOD_DAYS),
+        listRecentAppointments(business.id, periodDays),
         listServices(business.id),
-        listTransactions(business.id),
+        listTransactions(business.id, periodDays),
       ]);
       return { appointments, services, transactions };
     },
-    [business.id],
+    [business.id, periodDays],
   );
 
   const appointments = data?.appointments ?? [];
@@ -56,7 +58,26 @@ export default function ReportsScreen() {
 
   return (
     <Screen>
-      <ScreenHeader title="Relatórios" subtitle="Últimos 30 dias" />
+      <ScreenHeader title="Relatórios" subtitle={`Últimos ${periodDays} dias`} />
+
+      <View style={styles.periodRow}>
+        {PERIOD_OPTIONS.map((option) => {
+          const selected = periodDays === option;
+          return (
+            <Pressable
+              key={option}
+              accessibilityRole="button"
+              accessibilityState={{ selected }}
+              onPress={() => setPeriodDays(option)}
+              style={[styles.periodChip, selected ? styles.periodSelected : null]}
+            >
+              <AppText variant="caption" color={selected ? colors.surface : colors.sub}>
+                {option} dias
+              </AppText>
+            </Pressable>
+          );
+        })}
+      </View>
 
       <QueryBoundary loading={loading} error={error} onRetry={refetch}>
         {appointments.length === 0 && (data?.transactions ?? []).length === 0 ? (
@@ -132,6 +153,20 @@ export default function ReportsScreen() {
 }
 
 const styles = StyleSheet.create({
+  periodRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginBottom: spacing.lg,
+  },
+  periodChip: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.full,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  periodSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',

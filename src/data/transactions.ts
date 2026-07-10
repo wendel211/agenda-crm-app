@@ -10,12 +10,15 @@ function periodStart(days = DEFAULT_PERIOD_DAYS): string {
   return toISODate(date);
 }
 
-export async function listTransactions(businessId: string): Promise<Transaction[]> {
+export async function listTransactions(
+  businessId: string,
+  days = DEFAULT_PERIOD_DAYS,
+): Promise<Transaction[]> {
   const { data, error } = await supabase
     .from('transactions')
     .select('id, kind, description, category, amount, date')
     .eq('business_id', businessId)
-    .gte('date', periodStart())
+    .gte('date', periodStart(days))
     .order('date', { ascending: false })
     .order('created_at', { ascending: false });
   if (error) {

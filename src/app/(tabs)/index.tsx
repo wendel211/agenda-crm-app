@@ -16,7 +16,7 @@ import {
 } from '@/components/ui';
 import { useBusiness } from '@/context/auth-context';
 import { listAppointmentsByDate } from '@/data/appointments';
-import { listGoals } from '@/data/goals';
+import { listGoalsWithProgress } from '@/data/goals';
 import { useQuery } from '@/data/use-query';
 import { formatCurrency, formatWeekday, toISODate } from '@/lib/format';
 import { colors, radius, spacing } from '@/theme';
@@ -30,7 +30,7 @@ export default function DashboardScreen() {
     async () => {
       const [appointments, goals] = await Promise.all([
         listAppointmentsByDate(business.id, today),
-        listGoals(business.id),
+        listGoalsWithProgress(business.id),
       ]);
       return { appointments, goals };
     },
