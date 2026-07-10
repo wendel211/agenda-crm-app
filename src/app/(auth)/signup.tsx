@@ -21,7 +21,7 @@ export default function SignupScreen() {
     }
     setError(undefined);
     setLoading(true);
-    const { error: authError } = await supabase.auth.signUp({
+    const { data, error: authError } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { full_name: name } },
@@ -29,7 +29,22 @@ export default function SignupScreen() {
     setLoading(false);
 
     if (authError) {
-      setError('Não foi possível criar a conta. Tente novamente.');
+      const messages: Record<string, string> = {
+        user_already_exists: 'Já existe uma conta com este e-mail. Use "Entrar".',
+        email_exists: 'Já existe uma conta com este e-mail. Use "Entrar".',
+        over_email_send_rate_limit:
+          'Limite de e-mails atingido. Aguarde alguns minutos ou desative a confirmação de e-mail no Supabase.',
+        weak_password: 'Senha muito fraca. Use ao menos 6 caracteres.',
+      };
+      setError(messages[authError.code ?? ''] ?? 'Não foi possível criar a conta. Tente novamente.');
+      return;
+    }
+
+    // Sem sessão = projeto exige confirmação de e-mail antes do primeiro acesso.
+    if (!data.session) {
+      setError(
+        'Conta criada, mas o projeto exige confirmação de e-mail. Confirme pelo link enviado antes de entrar.',
+      );
       return;
     }
     router.replace('/');

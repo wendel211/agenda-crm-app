@@ -24,7 +24,11 @@ export default function LoginScreen() {
     setLoading(false);
 
     if (authError) {
-      setError('Não foi possível entrar. Confira suas credenciais.');
+      setError(
+        authError.code === 'email_not_confirmed'
+          ? 'Este e-mail ainda não foi confirmado. Confirme pelo link enviado ou peça ao administrador para desativar a confirmação de e-mail.'
+          : 'E-mail ou senha incorretos.',
+      );
       return;
     }
     router.replace('/');
