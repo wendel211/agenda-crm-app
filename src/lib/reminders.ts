@@ -1,5 +1,4 @@
 import { Platform } from 'react-native';
-import * as Notifications from 'expo-notifications';
 
 import { parseISODate } from './format';
 import { timeToMinutes } from './time';
@@ -7,27 +6,32 @@ import { timeToMinutes } from './time';
 const REMINDER_MINUTES_BEFORE = 60;
 const CHANNEL_ID = 'reminders';
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+let handlerConfigured = false;
 
-async function ensurePermission(): Promise<boolean> {
-  const current = await Notifications.getPermissionsAsync();
-  if (current.granted) {
-    return true;
+/**
+ * Carrega expo-notifications sob demanda: no Expo Go (SDK 53+) o import
+ * do módulo lança erro, então só importamos na hora de usar, protegido.
+ */
+async function loadNotifications() {
+  const Notifications = await import('expo-notifications');
+  if (!handlerConfigured) {
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowBanner: true,
+        shouldShowList: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+      }),
+    });
+    handlerConfigured = true;
   }
-  const requested = await Notifications.requestPermissionsAsync();
-  return requested.granted;
+  return Notifications;
 }
 
 /**
  * Agenda um lembrete local 1h antes do atendimento no aparelho da profissional.
  * Falha em silêncio: lembrete é conveniência, nunca pode travar o agendamento.
+ * No Expo Go não faz nada — requer development build.
  */
 export async function scheduleAppointmentReminder(input: {
   clientName: string;
@@ -35,9 +39,16 @@ export async function scheduleAppointmentReminder(input: {
   startTime: string;
 }): Promise<void> {
   try {
-    if (!(await ensurePermission())) {
-      return;
+    const Notifications = await loadNotifications();
+
+    const current = await Notifications.getPermissionsAsync();
+    if (!current.granted) {
+      const requested = await Notifications.requestPermissionsAsync();
+      if (!requested.granted) {
+        return;
+      }
     }
+
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
         name: 'Lembretes de atendimento',
@@ -64,6 +75,6 @@ export async function scheduleAppointmentReminder(input: {
       },
     });
   } catch {
-    // Sem permissão ou ambiente sem suporte (ex.: web) — segue sem lembrete.
+    // Expo Go, sem permissão ou plataforma sem suporte — segue sem lembrete.
   }
 }
