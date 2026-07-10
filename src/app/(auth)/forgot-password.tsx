@@ -15,7 +15,9 @@ export default function ForgotPasswordScreen() {
       return;
     }
     setLoading(true);
-    await supabase.auth.resetPasswordForEmail(email);
+    await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: 'agendacrm://reset-password',
+    });
     setLoading(false);
     setSent(true);
   }

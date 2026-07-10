@@ -6,7 +6,11 @@ import { colors } from '@/theme';
 
 /** Porta de entrada: decide a rota inicial a partir da sessão. */
 export default function Index() {
-  const { session, business, loading } = useAuth();
+  const { session, business, loading, passwordRecovery } = useAuth();
+
+  if (passwordRecovery) {
+    return <Redirect href="/(auth)/reset-password" />;
+  }
 
   if (loading) {
     return (

@@ -25,6 +25,7 @@ import { listServices } from '@/data/services';
 import { listTeam } from '@/data/team';
 import { useQuery } from '@/data/use-query';
 import { formatCurrency, formatDuration, parseISODate, toISODate } from '@/lib/format';
+import { scheduleAppointmentReminder } from '@/lib/reminders';
 import { minutesToTime, overlapsAny, timeToMinutes, weekdayName } from '@/lib/time';
 import { colors, radius, spacing } from '@/theme';
 
@@ -171,6 +172,9 @@ export default function NewAppointmentScreen() {
         await updateAppointment(id, input);
       } else {
         await createAppointment(input);
+        const clientName =
+          base.data?.clients.find((client) => client.id === clientId)?.name ?? 'Cliente';
+        await scheduleAppointmentReminder({ clientName, date, startTime: time });
       }
       router.back();
     } catch (cause) {

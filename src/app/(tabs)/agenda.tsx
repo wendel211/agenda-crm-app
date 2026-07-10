@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,6 +11,7 @@ import { listAppointmentsBetween } from '@/data/appointments';
 import { listTeam } from '@/data/team';
 import { useQuery } from '@/data/use-query';
 import { formatCurrency, parseISODate, toISODate } from '@/lib/format';
+import { supabase } from '@/lib/supabase';
 import { colors, radius, spacing } from '@/theme';
 
 type ViewMode = 'dia' | 'semana' | 'mes';
@@ -78,6 +79,28 @@ export default function AgendaScreen() {
     () => listAppointmentsBetween(business.id, range.from, range.to),
     [business.id, range.from, range.to],
   );
+
+  // Realtime: outro aparelho criou/alterou um agendamento → recarrega.
+  useEffect(() => {
+    const channel = supabase
+      .channel(`appointments-${business.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'appointments',
+          filter: `business_id=eq.${business.id}`,
+        },
+        () => {
+          refetch();
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [business.id, refetch]);
 
   const activeTeam = (team.data ?? []).filter((member) => member.active);
   const appointments = (data ?? []).filter(
