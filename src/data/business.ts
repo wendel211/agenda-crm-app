@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { servicePalette } from '@/theme';
 import type { Business, DaySchedule } from '@/types';
 
 const WEEK: string[] = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
@@ -44,8 +45,6 @@ interface CreateBusinessInput {
   serviceNames: string[];
 }
 
-const SERVICE_COLORS = ['#6C5CE7', '#FF5C8A', '#00C39A', '#FFAA2B', '#3E8BFF', '#FF5A5F'];
-
 /** Onboarding: cria o negócio, o dono como profissional e os serviços iniciais. */
 export async function createBusiness(input: CreateBusinessInput): Promise<Business> {
   const { data, error } = await supabase
@@ -78,7 +77,7 @@ export async function createBusiness(input: CreateBusinessInput): Promise<Busine
         name,
         duration_minutes: 60,
         price: 0,
-        color: SERVICE_COLORS[index % SERVICE_COLORS.length],
+        color: servicePalette[index % servicePalette.length],
       })),
     );
     if (servicesError) {

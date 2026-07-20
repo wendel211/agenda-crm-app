@@ -71,7 +71,7 @@ export default function ReportsScreen() {
               onPress={() => setPeriodDays(option)}
               style={[styles.periodChip, selected ? styles.periodSelected : null]}
             >
-              <AppText variant="caption" color={selected ? colors.surface : colors.sub}>
+              <AppText variant="caption" color={selected ? colors.onPrimary : colors.sub}>
                 {option} dias
               </AppText>
             </Pressable>
@@ -101,7 +101,7 @@ export default function ReportsScreen() {
                 <AppText variant="caption" color={colors.sub}>
                   Ticket médio
                 </AppText>
-                <AppText variant="heading" color={colors.primary}>
+                <AppText variant="heading" color={colors.primaryDark}>
                   {formatCurrency(averageTicket)}
                 </AppText>
               </Card>

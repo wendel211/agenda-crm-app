@@ -110,7 +110,7 @@ export default function FinanceScreen() {
                 onPress={() => setFilter(option.value)}
                 style={[styles.filterChip, selected ? styles.filterSelected : null]}
               >
-                <AppText variant="caption" color={selected ? colors.surface : colors.sub}>
+                <AppText variant="caption" color={selected ? colors.onPrimary : colors.sub}>
                   {option.label}
                 </AppText>
               </Pressable>

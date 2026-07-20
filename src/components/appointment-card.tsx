@@ -18,7 +18,7 @@ export function AppointmentCard({ appointment }: AppointmentCardProps) {
   return (
     <Card onPress={() => router.push(`/appointments/${appointment.id}`)} style={styles.card}>
       <View style={styles.time}>
-        <AppText variant="subheading" color={colors.primary}>
+        <AppText variant="subheading" color={colors.primaryDark}>
           {appointment.startTime}
         </AppText>
         <AppText variant="caption" color={colors.muted}>

@@ -6,7 +6,7 @@ import { AppText } from './app-text';
 export type BadgeTone = 'primary' | 'accent' | 'success' | 'warning' | 'danger' | 'info' | 'neutral';
 
 const tones: Record<BadgeTone, { background: string; foreground: string }> = {
-  primary: { background: colors.primarySoft, foreground: colors.primary },
+  primary: { background: colors.primarySoft, foreground: colors.primaryDark },
   accent: { background: colors.accentSoft, foreground: colors.accent },
   success: { background: colors.successSoft, foreground: colors.success },
   warning: { background: colors.warningSoft, foreground: colors.warning },

@@ -1,33 +1,46 @@
 /**
- * Paleta do app — minimalista com acentos vívidos.
- * Neutros quase monocromáticos + violeta/rosa saturados para ação e destaque.
+ * Identidade do CRM: terracota acolhedor, neutros slate e fundos claros.
+ * Cores vibrantes ficam reservadas para ações e estados do sistema.
  */
 export const colors = {
   // Marca
-  primary: '#6C5CE7',
-  primaryDark: '#5747D6',
-  primarySoft: '#EEEBFF',
-  accent: '#FF5C8A',
-  accentSoft: '#FFEBF1',
+  primary: '#D49A89',
+  primaryDark: '#A96555',
+  primarySoft: '#F8EDEA',
+  primaryHighlight: '#E5B7A9',
+  onPrimary: '#1E293B',
+  onPrimaryMuted: 'rgba(30, 41, 59, 0.78)',
+  accent: '#B77986',
+  accentSoft: '#F7ECEF',
 
   // Semânticas
-  success: '#00C39A',
-  successSoft: '#E3FAF4',
-  warning: '#FFAA2B',
-  warningSoft: '#FFF4E0',
-  danger: '#FF5A5F',
-  dangerSoft: '#FFECED',
-  info: '#3E8BFF',
-  infoSoft: '#E8F1FF',
+  success: '#10B981',
+  successSoft: '#ECFDF5',
+  warning: '#F59E0B',
+  warningSoft: '#FFFBEB',
+  danger: '#EF4444',
+  dangerSoft: '#FEF2F2',
+  info: '#64748B',
+  infoSoft: '#F1F5F9',
 
   // Neutros
-  ink: '#16141F',
-  sub: '#6F6B7D',
-  muted: '#A6A2B5',
-  border: '#ECEAF3',
-  background: '#FAFAFD',
+  ink: '#1E293B',
+  sub: '#475569',
+  muted: '#94A3B8',
+  border: '#E2E8F0',
+  background: '#F8FAFC',
   surface: '#FFFFFF',
-  overlay: 'rgba(22, 20, 31, 0.45)',
+  surfaceTranslucent: 'rgba(255, 255, 255, 0.2)',
+  overlay: 'rgba(30, 41, 59, 0.45)',
 } as const;
+
+export const servicePalette = [
+  colors.primary,
+  colors.primaryDark,
+  colors.accent,
+  colors.success,
+  colors.warning,
+  colors.info,
+] as const;
 
 export type AppColor = keyof typeof colors;

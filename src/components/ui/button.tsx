@@ -28,9 +28,9 @@ const background: Record<Variant, string> = {
 };
 
 const foreground: Record<Variant, string> = {
-  primary: colors.surface,
-  soft: colors.primary,
-  ghost: colors.primary,
+  primary: colors.onPrimary,
+  soft: colors.primaryDark,
+  ghost: colors.primaryDark,
   danger: colors.danger,
 };
 

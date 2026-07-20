@@ -7,10 +7,10 @@ import { useBusiness } from '@/context/auth-context';
 import { getService, saveService } from '@/data/services';
 import { formatDuration } from '@/lib/format';
 import { maskCurrency, parseCurrency } from '@/lib/masks';
-import { colors, radius, spacing } from '@/theme';
+import { colors, radius, servicePalette, spacing } from '@/theme';
 
 const durations = [30, 40, 45, 60, 90, 120, 150];
-const palette = ['#6C5CE7', '#FF5C8A', '#00C39A', '#FFAA2B', '#3E8BFF', '#FF5A5F'];
+const palette = servicePalette;
 
 export default function ServiceFormScreen() {
   const router = useRouter();
@@ -20,7 +20,7 @@ export default function ServiceFormScreen() {
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [duration, setDuration] = useState(60);
-  const [color, setColor] = useState(palette[0]);
+  const [color, setColor] = useState<string>(palette[0]);
   const [active, setActive] = useState(true);
   const [error, setError] = useState<string>();
   const [saving, setSaving] = useState(false);
@@ -104,7 +104,7 @@ export default function ServiceFormScreen() {
                 onPress={() => setDuration(option)}
                 style={[styles.chip, selected ? styles.chipSelected : null]}
               >
-                <AppText variant="caption" color={selected ? colors.surface : colors.sub}>
+                <AppText variant="caption" color={selected ? colors.onPrimary : colors.sub}>
                   {formatDuration(option)}
                 </AppText>
               </Pressable>

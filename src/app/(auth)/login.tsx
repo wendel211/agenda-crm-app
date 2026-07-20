@@ -70,7 +70,7 @@ export default function LoginScreen() {
           hitSlop={8}
           style={styles.forgot}
         >
-          <AppText variant="caption" color={colors.primary}>
+          <AppText variant="caption" color={colors.primaryDark}>
             Esqueci minha senha
           </AppText>
         </Pressable>

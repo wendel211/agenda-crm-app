@@ -19,7 +19,7 @@ export default function WelcomeScreen() {
 
   return (
     <LinearGradient
-      colors={[colors.primary, '#8E7CFF', colors.accent]}
+      colors={[colors.primaryHighlight, colors.primary, colors.primaryDark]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1.4 }}
       style={[styles.root, { paddingTop: insets.top + spacing.xxxl, paddingBottom: insets.bottom + spacing.xxl }]}
@@ -28,10 +28,10 @@ export default function WelcomeScreen() {
         <View style={styles.logoBox}>
           <Ionicons name="sparkles" size={30} color={colors.primary} />
         </View>
-        <AppText variant="display" color={colors.surface}>
+        <AppText variant="display" color={colors.onPrimary}>
           Seu negócio de beleza,{'\n'}organizado.
         </AppText>
-        <AppText variant="body" color="rgba(255,255,255,0.85)">
+        <AppText variant="body" color={colors.onPrimaryMuted}>
           Agendamentos, clientes e financeiro em um só lugar — feito para quem vive da beleza.
         </AppText>
       </View>
@@ -40,9 +40,9 @@ export default function WelcomeScreen() {
         {highlights.map((item) => (
           <View key={item.icon} style={styles.highlightRow}>
             <View style={styles.highlightIcon}>
-              <Ionicons name={item.icon} size={18} color={colors.surface} />
+              <Ionicons name={item.icon} size={18} color={colors.onPrimary} />
             </View>
-            <AppText variant="bodyStrong" color={colors.surface} style={styles.highlightText}>
+            <AppText variant="bodyStrong" color={colors.onPrimary} style={styles.highlightText}>
               {item.text}
             </AppText>
           </View>
@@ -54,13 +54,13 @@ export default function WelcomeScreen() {
           label="Criar conta grátis"
           onPress={() => router.push('/(auth)/signup')}
           style={styles.primaryAction}
-          labelColor={colors.primary}
+          labelColor={colors.primaryDark}
         />
         <Button
           label="Já tenho conta"
           onPress={() => router.push('/(auth)/login')}
           variant="ghost"
-          labelColor={colors.surface}
+          labelColor={colors.onPrimary}
         />
       </View>
     </LinearGradient>
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: radius.full,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: colors.surfaceTranslucent,
     alignItems: 'center',
     justifyContent: 'center',
   },

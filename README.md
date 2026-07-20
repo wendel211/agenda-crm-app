@@ -8,7 +8,7 @@ CRM e agenda para profissionais de beleza — agendamentos, clientes, serviços,
 
 - **Expo (React Native + TypeScript)** com Expo Router
 - **Supabase** — autenticação, banco Postgres e realtime
-- Design system próprio: paleta minimalista com acentos vívidos (violeta `#6C5CE7` e rosa `#FF5C8A`), tipografia Manrope
+- Design system próprio: paleta sofisticada com terracota `#D49A89`, slate `#1E293B`, fundos off-white e cores semânticas para status, tipografia Manrope
 
 ## Telas
 

@@ -86,7 +86,7 @@ export default function ClientProfileScreen() {
 
             <View style={styles.stats}>
               <Card style={styles.statCard}>
-                <AppText variant="heading" color={colors.primary}>
+                <AppText variant="heading" color={colors.primaryDark}>
                   {client.visits}
                 </AppText>
                 <AppText variant="caption" color={colors.sub}>
@@ -115,7 +115,7 @@ export default function ClientProfileScreen() {
               <Card style={styles.notes}>
                 <View style={styles.notesHeader}>
                   <Ionicons name="document-text-outline" size={16} color={colors.primary} />
-                  <AppText variant="caption" color={colors.primary}>
+                  <AppText variant="caption" color={colors.primaryDark}>
                     FICHA DA CLIENTE
                   </AppText>
                 </View>

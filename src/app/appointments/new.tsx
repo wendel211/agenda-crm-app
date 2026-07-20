@@ -237,11 +237,11 @@ export default function NewAppointmentScreen() {
                   style={styles.clientChip}
                 >
                   <View style={styles.addClientCircle}>
-                    <AppText variant="heading" color={colors.primary}>
+                    <AppText variant="heading" color={colors.primaryDark}>
                       +
                     </AppText>
                   </View>
-                  <AppText variant="caption" color={colors.primary}>
+                  <AppText variant="caption" color={colors.primaryDark}>
                     Novo
                   </AppText>
                 </Pressable>
@@ -315,10 +315,10 @@ export default function NewAppointmentScreen() {
                     onPress={() => setDate(day.iso)}
                     style={[styles.dayChip, selected ? styles.dayChipSelected : null]}
                   >
-                    <AppText variant="micro" color={selected ? 'rgba(255,255,255,0.8)' : colors.muted}>
+                    <AppText variant="micro" color={selected ? colors.onPrimaryMuted : colors.muted}>
                       {day.weekday}
                     </AppText>
-                    <AppText variant="subheading" color={selected ? colors.surface : colors.ink}>
+                    <AppText variant="subheading" color={selected ? colors.onPrimary : colors.ink}>
                       {day.day}
                     </AppText>
                   </Pressable>
@@ -356,7 +356,7 @@ export default function NewAppointmentScreen() {
                     >
                       <AppText
                         variant="caption"
-                        color={selected ? colors.surface : slot.available ? colors.sub : colors.muted}
+                        color={selected ? colors.onPrimary : slot.available ? colors.sub : colors.muted}
                       >
                         {slot.time}
                       </AppText>
@@ -388,7 +388,7 @@ export default function NewAppointmentScreen() {
                   <AppText variant="caption" color={colors.sub}>
                     Valor total
                   </AppText>
-                  <AppText variant="heading" color={colors.primary}>
+                  <AppText variant="heading" color={colors.primaryDark}>
                     {formatCurrency(total)}
                   </AppText>
                 </View>

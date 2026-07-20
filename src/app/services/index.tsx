@@ -66,7 +66,7 @@ export default function ServicesScreen() {
                 </AppText>
               </View>
               <View style={styles.right}>
-                <AppText variant="subheading" color={colors.primary}>
+                <AppText variant="subheading" color={colors.primaryDark}>
                   {formatCurrency(service.price)}
                 </AppText>
                 {service.active ? null : <Badge label="Inativo" tone="neutral" />}
