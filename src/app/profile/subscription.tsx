@@ -30,28 +30,28 @@ export default function SubscriptionScreen() {
       </Card>
 
       <LinearGradient
-        colors={[colors.primary, colors.accent]}
+        colors={[colors.primary, colors.primaryDark]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1.2, y: 1.2 }}
         style={styles.proCard}
       >
         <View style={styles.proHeader}>
-          <Ionicons name="diamond" size={22} color={colors.surface} />
-          <AppText variant="heading" color={colors.surface}>
+          <Ionicons name="diamond" size={22} color={colors.onPrimary} />
+          <AppText variant="heading" color={colors.onPrimary}>
             Plano Pro
           </AppText>
         </View>
-        <AppText variant="display" color={colors.surface}>
+        <AppText variant="display" color={colors.onPrimary}>
           R$ 39,90
-          <AppText variant="body" color="rgba(255,255,255,0.8)">
+          <AppText variant="body" color={colors.onPrimaryMuted}>
             /mês
           </AppText>
         </AppText>
         <View style={styles.features}>
           {proFeatures.map((feature) => (
             <View key={feature} style={styles.featureRow}>
-              <Ionicons name="checkmark-circle" size={18} color={colors.surface} />
-              <AppText variant="bodyStrong" color={colors.surface} style={styles.featureText}>
+              <Ionicons name="checkmark-circle" size={18} color={colors.onPrimary} />
+              <AppText variant="bodyStrong" color={colors.onPrimary} style={styles.featureText}>
                 {feature}
               </AppText>
             </View>
@@ -61,7 +61,7 @@ export default function SubscriptionScreen() {
           label="Assinar o Pro"
           onPress={() => {}}
           style={styles.proButton}
-          labelColor={colors.primary}
+          labelColor={colors.primaryDark}
         />
       </LinearGradient>
 

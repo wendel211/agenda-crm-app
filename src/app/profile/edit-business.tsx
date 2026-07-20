@@ -71,7 +71,7 @@ export default function EditBusinessScreen() {
                 onPress={() => toggleSegment(segment)}
                 style={[styles.chip, selected ? styles.chipSelected : null]}
               >
-                <AppText variant="caption" color={selected ? colors.surface : colors.sub}>
+                <AppText variant="caption" color={selected ? colors.onPrimary : colors.sub}>
                   {segment}
                 </AppText>
               </Pressable>

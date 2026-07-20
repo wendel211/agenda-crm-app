@@ -104,7 +104,7 @@ export default function OnboardingScreen() {
                   onPress={() => toggle(selectedSegments, segment, setSelectedSegments)}
                   style={[styles.chip, selected ? styles.chipSelected : null]}
                 >
-                  <AppText variant="caption" color={selected ? colors.surface : colors.sub}>
+                  <AppText variant="caption" color={selected ? colors.onPrimary : colors.sub}>
                     {segment}
                   </AppText>
                 </Pressable>
@@ -176,7 +176,7 @@ export default function OnboardingScreen() {
                   onPress={() => toggle(selectedServices, service, setSelectedServices)}
                   style={[styles.chip, selected ? styles.chipSelected : null]}
                 >
-                  <AppText variant="caption" color={selected ? colors.surface : colors.sub}>
+                  <AppText variant="caption" color={selected ? colors.onPrimary : colors.sub}>
                     {service}
                   </AppText>
                 </Pressable>

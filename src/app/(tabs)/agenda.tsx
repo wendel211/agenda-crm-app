@@ -176,7 +176,7 @@ export default function AgendaScreen() {
               onPress={() => setMode(option)}
               style={[styles.modeChip, selected ? styles.modeChipSelected : null]}
             >
-              <AppText variant="caption" color={selected ? colors.surface : colors.sub}>
+              <AppText variant="caption" color={selected ? colors.onPrimary : colors.sub}>
                 {label}
               </AppText>
             </Pressable>
@@ -201,10 +201,10 @@ export default function AgendaScreen() {
                 onPress={() => setSelectedDay(day.iso)}
                 style={[styles.dayChip, selected ? styles.dayChipSelected : null]}
               >
-                <AppText variant="micro" color={selected ? 'rgba(255,255,255,0.8)' : colors.muted}>
+                <AppText variant="micro" color={selected ? colors.onPrimaryMuted : colors.muted}>
                   {day.weekday}
                 </AppText>
-                <AppText variant="heading" color={selected ? colors.surface : colors.ink}>
+                <AppText variant="heading" color={selected ? colors.onPrimary : colors.ink}>
                   {day.day}
                 </AppText>
               </Pressable>

@@ -62,21 +62,21 @@ export default function DashboardScreen() {
       </View>
 
       <LinearGradient
-        colors={[colors.primary, '#8E7CFF']}
+        colors={[colors.primary, colors.primaryDark]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.revenueCard}
       >
-        <AppText variant="caption" color="rgba(255,255,255,0.8)">
+        <AppText variant="caption" color={colors.onPrimaryMuted}>
           PREVISTO PARA HOJE
         </AppText>
-        <AppText variant="display" color={colors.surface}>
+        <AppText variant="display" color={colors.onPrimary}>
           {formatCurrency(expectedToday)}
         </AppText>
         <View style={styles.revenueFooter}>
           <View style={styles.revenueStat}>
-            <Ionicons name="calendar" size={14} color={colors.surface} />
-            <AppText variant="caption" color={colors.surface}>
+            <Ionicons name="calendar" size={14} color={colors.onPrimary} />
+            <AppText variant="caption" color={colors.onPrimary}>
               {todayAppointments.length} atendimentos
             </AppText>
           </View>
@@ -86,10 +86,10 @@ export default function DashboardScreen() {
             hitSlop={8}
             style={styles.revenueLink}
           >
-            <AppText variant="caption" color={colors.surface}>
+            <AppText variant="caption" color={colors.onPrimary}>
               Ver relatórios
             </AppText>
-            <Ionicons name="arrow-forward" size={14} color={colors.surface} />
+            <Ionicons name="arrow-forward" size={14} color={colors.onPrimary} />
           </Pressable>
         </View>
       </LinearGradient>
@@ -171,7 +171,7 @@ export default function DashboardScreen() {
               <Card key={goal.id} onPress={() => router.push('/goals')} style={styles.goalCard}>
                 <View style={styles.goalHeader}>
                   <AppText variant="bodyStrong">{goal.title}</AppText>
-                  <AppText variant="caption" color={colors.primary}>
+                  <AppText variant="caption" color={colors.primaryDark}>
                     {Math.round(progress * 100)}%
                   </AppText>
                 </View>

@@ -44,7 +44,7 @@ export function TimePickerModal({ visible, title, value, onSelect, onClose }: Ti
                     }}
                     style={[styles.chip, selected ? styles.chipSelected : null]}
                   >
-                    <AppText variant="caption" color={selected ? colors.surface : colors.sub}>
+                    <AppText variant="caption" color={selected ? colors.onPrimary : colors.sub}>
                       {option}
                     </AppText>
                   </Pressable>

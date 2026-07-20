@@ -84,7 +84,7 @@ export default function BusinessHoursScreen() {
                   onPress={() => setPicker({ day: item.day, field: 'from' })}
                   style={styles.hourChip}
                 >
-                  <AppText variant="caption" color={colors.primary}>
+                  <AppText variant="caption" color={colors.primaryDark}>
                     {item.from}
                   </AppText>
                 </Pressable>
@@ -97,7 +97,7 @@ export default function BusinessHoursScreen() {
                   onPress={() => setPicker({ day: item.day, field: 'to' })}
                   style={styles.hourChip}
                 >
-                  <AppText variant="caption" color={colors.primary}>
+                  <AppText variant="caption" color={colors.primaryDark}>
                     {item.to}
                   </AppText>
                 </Pressable>

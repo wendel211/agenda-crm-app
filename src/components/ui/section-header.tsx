@@ -15,7 +15,7 @@ export function SectionHeader({ title, actionLabel, onAction }: SectionHeaderPro
       <AppText variant="heading">{title}</AppText>
       {actionLabel && onAction ? (
         <Pressable accessibilityRole="button" onPress={onAction} hitSlop={8}>
-          <AppText variant="caption" color={colors.primary}>
+          <AppText variant="caption" color={colors.primaryDark}>
             {actionLabel}
           </AppText>
         </Pressable>

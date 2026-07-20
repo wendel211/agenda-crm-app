@@ -33,9 +33,9 @@ function TabBar({ state, navigation }: BottomTabBarProps) {
         <Ionicons
           name={active ? tab.icon : (`${tab.icon}-outline` as const)}
           size={22}
-          color={active ? colors.primary : colors.muted}
+          color={active ? colors.primaryDark : colors.muted}
         />
-        <AppText variant="micro" color={active ? colors.primary : colors.muted}>
+        <AppText variant="micro" color={active ? colors.primaryDark : colors.muted}>
           {tab.label}
         </AppText>
       </Pressable>
@@ -51,7 +51,7 @@ function TabBar({ state, navigation }: BottomTabBarProps) {
         onPress={() => router.push('/appointments/new')}
         style={({ pressed }) => [styles.plus, pressed ? styles.plusPressed : null]}
       >
-        <Ionicons name="add" size={30} color={colors.surface} />
+        <Ionicons name="add" size={30} color={colors.onPrimary} />
       </Pressable>
       {tabs.slice(2).map(renderTab)}
     </View>

@@ -47,7 +47,7 @@ create table public.services (
   name text not null,
   duration_minutes integer not null check (duration_minutes > 0),
   price numeric(10, 2) not null default 0 check (price >= 0),
-  color text not null default '#6C5CE7',
+  color text not null default '#D49A89',
   active boolean not null default true,
   created_at timestamptz not null default now()
 );

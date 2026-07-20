@@ -78,7 +78,7 @@ export default function NewGoalScreen() {
                 onPress={() => setKind(option.value)}
                 style={[styles.chip, selected ? styles.chipSelected : null]}
               >
-                <AppText variant="caption" color={selected ? colors.surface : colors.sub}>
+                <AppText variant="caption" color={selected ? colors.onPrimary : colors.sub}>
                   {option.label}
                 </AppText>
               </Pressable>
@@ -108,7 +108,7 @@ export default function NewGoalScreen() {
                 }}
                 style={[styles.chip, selected ? styles.chipSelected : null]}
               >
-                <AppText variant="caption" color={selected ? colors.surface : colors.sub}>
+                <AppText variant="caption" color={selected ? colors.onPrimary : colors.sub}>
                   {option.label}
                 </AppText>
               </Pressable>

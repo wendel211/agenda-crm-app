@@ -100,7 +100,7 @@ export default function ClientFormScreen() {
         >
           <Avatar name={name || '?'} size={80} uri={photoUri} />
           <View style={styles.photoBadge}>
-            <Ionicons name="camera" size={14} color={colors.surface} />
+            <Ionicons name="camera" size={14} color={colors.onPrimary} />
           </View>
         </Pressable>
 
