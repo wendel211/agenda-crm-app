@@ -1,5 +1,7 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
+
+import { reportError } from '@/lib/monitoring';
 
 interface QueryState<T> {
   data: T | undefined;
@@ -17,17 +19,23 @@ export function useQuery<T>(fetcher: () => Promise<T>, deps: unknown[]): QuerySt
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>();
 
+  const fetcherRef = useRef(fetcher);
+  useEffect(() => {
+    fetcherRef.current = fetcher;
+  }, [fetcher]);
+  const dependencyKey = JSON.stringify(deps);
+
   const load = useCallback(async () => {
     try {
       setError(undefined);
-      setData(await fetcher());
+      setData(await fetcherRef.current());
     } catch (cause) {
+      reportError(cause, { operation: 'query_load', dependencyKey });
       setError(cause instanceof Error ? cause.message : 'Erro ao carregar os dados.');
     } finally {
       setLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
+  }, [dependencyKey]);
 
   useFocusEffect(
     useCallback(() => {

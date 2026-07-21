@@ -112,7 +112,7 @@ export default function AgendaScreen() {
   const rangeTotal = activeAppointments.reduce((sum, item) => sum + item.price, 0);
 
   // Semana: agrupado por dia.
-  const byDay = useMemo(() => {
+  const byDay = (() => {
     const groups = new Map<string, typeof appointments>();
     for (const appointment of appointments) {
       const list = groups.get(appointment.date) ?? [];
@@ -120,18 +120,18 @@ export default function AgendaScreen() {
       groups.set(appointment.date, list);
     }
     return [...groups.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-  }, [appointments]);
+  })();
 
   // Mês: contagem por dia para o calendário.
-  const countByDay = useMemo(() => {
+  const countByDay = (() => {
     const counts = new Map<string, number>();
     for (const appointment of activeAppointments) {
       counts.set(appointment.date, (counts.get(appointment.date) ?? 0) + 1);
     }
     return counts;
-  }, [activeAppointments]);
+  })();
 
-  const monthGrid = useMemo(() => {
+  const monthGrid = (() => {
     if (mode !== 'mes') {
       return [];
     }
@@ -143,7 +143,7 @@ export default function AgendaScreen() {
       cells.push(toISODate(new Date(first.getFullYear(), first.getMonth(), day)));
     }
     return cells;
-  }, [mode, range]);
+  })();
 
   function shiftRange(direction: 1 | -1) {
     if (mode === 'semana') {
