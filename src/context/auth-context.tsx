@@ -3,6 +3,7 @@ import { Linking } from 'react-native';
 import type { Session } from '@supabase/supabase-js';
 
 import { fetchMyBusiness } from '@/data/business';
+import { identifyMonitoringUser, reportError } from '@/lib/monitoring';
 import { supabase } from '@/lib/supabase';
 import type { Business } from '@/types';
 
@@ -32,7 +33,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     try {
       setBusiness(await fetchMyBusiness());
-    } catch {
+    } catch (error) {
+      reportError(error, { operation: 'load_business', userId: activeSession.user.id });
       setBusiness(null);
     }
   }, []);
@@ -89,6 +91,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [loadBusiness, session]);
 
   const clearPasswordRecovery = useCallback(() => setPasswordRecovery(false), []);
+
+  useEffect(() => {
+    identifyMonitoringUser(session?.user.id, business?.id);
+  }, [business?.id, session?.user.id]);
 
   return (
     <AuthContext.Provider
