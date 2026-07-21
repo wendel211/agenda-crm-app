@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { reportError } from '@/lib/monitoring';
 import type { Appointment, AppointmentStatus } from '@/types';
 
 interface AppointmentRow {
@@ -156,76 +157,56 @@ interface CreateAppointmentInput {
 const OVERLAP_ERROR_CODE = '23P01';
 
 export async function createAppointment(input: CreateAppointmentInput): Promise<void> {
-  const { data, error } = await supabase
-    .from('appointments')
-    .insert({
-      business_id: input.businessId,
-      client_id: input.clientId,
-      professional_id: input.professionalId,
-      date: input.date,
-      start_time: input.startTime,
-      end_time: input.endTime,
-      price: input.price,
-      notes: input.notes || null,
-    })
-    .select('id')
-    .single();
+  const { error } = await supabase.rpc('create_appointment_atomic', {
+    p_business_id: input.businessId,
+    p_client_id: input.clientId,
+    p_professional_id: input.professionalId,
+    p_service_ids: input.serviceIds,
+    p_date: input.date,
+    p_start_time: input.startTime,
+    p_end_time: input.endTime,
+    p_price: input.price,
+    p_notes: input.notes ?? null,
+  });
   if (error) {
+    reportError(new Error(error.message), { operation: 'create_appointment', code: error.code });
     if (error.code === OVERLAP_ERROR_CODE) {
       throw new Error('Esse horário conflita com outro atendimento do profissional.');
     }
     throw new Error(error.message);
-  }
-
-  const { error: junctionError } = await supabase.from('appointment_services').insert(
-    input.serviceIds.map((serviceId) => ({ appointment_id: data.id, service_id: serviceId })),
-  );
-  if (junctionError) {
-    // Não deixa agendamento órfão de serviços.
-    await supabase.from('appointments').delete().eq('id', data.id);
-    throw new Error(junctionError.message);
   }
 }
 
 /** Remarcar/editar: atualiza o agendamento e substitui os serviços vinculados. */
 export async function updateAppointment(id: string, input: CreateAppointmentInput): Promise<void> {
-  const { error } = await supabase
-    .from('appointments')
-    .update({
-      client_id: input.clientId,
-      professional_id: input.professionalId,
-      date: input.date,
-      start_time: input.startTime,
-      end_time: input.endTime,
-      price: input.price,
-      notes: input.notes || null,
-    })
-    .eq('id', id);
+  const { error } = await supabase.rpc('update_appointment_atomic', {
+    p_appointment_id: id,
+    p_business_id: input.businessId,
+    p_client_id: input.clientId,
+    p_professional_id: input.professionalId,
+    p_service_ids: input.serviceIds,
+    p_date: input.date,
+    p_start_time: input.startTime,
+    p_end_time: input.endTime,
+    p_price: input.price,
+    p_notes: input.notes ?? null,
+  });
   if (error) {
+    reportError(new Error(error.message), { operation: 'update_appointment', code: error.code });
     if (error.code === OVERLAP_ERROR_CODE) {
       throw new Error('Esse horário conflita com outro atendimento do profissional.');
     }
     throw new Error(error.message);
   }
-
-  const { error: clearError } = await supabase
-    .from('appointment_services')
-    .delete()
-    .eq('appointment_id', id);
-  if (clearError) {
-    throw new Error(clearError.message);
-  }
-  const { error: junctionError } = await supabase.from('appointment_services').insert(
-    input.serviceIds.map((serviceId) => ({ appointment_id: id, service_id: serviceId })),
-  );
-  if (junctionError) {
-    throw new Error(junctionError.message);
-  }
 }
 
 export async function updateAppointmentStatus(id: string, status: AppointmentStatus): Promise<void> {
-  const { error } = await supabase.from('appointments').update({ status }).eq('id', id);
+  const { error } = await supabase.rpc('set_appointment_status', {
+    p_appointment_id: id,
+    p_status: status,
+  });
   if (error) {
+    reportError(new Error(error.message), { operation: 'set_appointment_status', code: error.code });
     throw new Error(error.message);
   }
 }

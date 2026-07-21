@@ -58,9 +58,14 @@ export default function NewAppointmentScreen() {
     [business.id],
   );
 
+  const selectedProfessionalId = professionalId ?? (!id ? base.data?.team[0]?.id : undefined);
+
   const busy = useQuery(
-    () => (professionalId ? listBusyRanges(professionalId, date, id) : Promise.resolve([])),
-    [professionalId, date, id],
+    () =>
+      selectedProfessionalId
+        ? listBusyRanges(selectedProfessionalId, date, id)
+        : Promise.resolve([]),
+    [selectedProfessionalId, date, id],
   );
 
   // Edição: pré-carrega o agendamento existente.
@@ -79,14 +84,6 @@ export default function NewAppointmentScreen() {
       }
     });
   }, [id]);
-
-  // Primeiro profissional ativo pré-selecionado (apenas ao criar).
-  useEffect(() => {
-    const first = base.data?.team[0];
-    if (first && !professionalId && !id) {
-      setProfessionalId(first.id);
-    }
-  }, [base.data, professionalId, id]);
 
   const days = useMemo(() => {
     const result = Array.from({ length: 10 }, (_, offset) => {
@@ -117,7 +114,7 @@ export default function NewAppointmentScreen() {
 
   // Slots dentro do expediente do dia, respeitando a duração total escolhida.
   const daySchedule = business.schedule.find((item) => item.day === weekdayName(date));
-  const slots = useMemo(() => {
+  const slots = (() => {
     if (!daySchedule?.open) {
       return [];
     }
@@ -133,16 +130,16 @@ export default function NewAppointmentScreen() {
       });
     }
     return result;
-  }, [daySchedule, totalMinutes, busy.data]);
+  })();
 
-  // Horário escolhido deixa de valer se ficou indisponível (troca de serviço/dia).
-  useEffect(() => {
-    if (time && !slots.some((slot) => slot.time === time && slot.available)) {
-      setTime(undefined);
-    }
-  }, [slots, time]);
+  const selectedTime =
+    time && slots.some((slot) => slot.time === time && slot.available) ? time : undefined;
 
-  const canSave = Boolean(clientId) && serviceIds.length > 0 && Boolean(time) && Boolean(professionalId);
+  const canSave =
+    Boolean(clientId) &&
+    serviceIds.length > 0 &&
+    Boolean(selectedTime) &&
+    Boolean(selectedProfessionalId);
 
   function toggleService(id: string) {
     setServiceIds((current) =>
@@ -151,7 +148,7 @@ export default function NewAppointmentScreen() {
   }
 
   async function handleSave() {
-    if (!clientId || !professionalId || !time) {
+    if (!clientId || !selectedProfessionalId || !selectedTime) {
       return;
     }
     setError(undefined);
@@ -159,11 +156,11 @@ export default function NewAppointmentScreen() {
     const input = {
       businessId: business.id,
       clientId,
-      professionalId,
+      professionalId: selectedProfessionalId,
       serviceIds,
       date,
-      startTime: time,
-      endTime: minutesToTime(timeToMinutes(time) + totalMinutes),
+      startTime: selectedTime,
+      endTime: minutesToTime(timeToMinutes(selectedTime) + totalMinutes),
       price: total,
       notes: notes.trim() || undefined,
     };
@@ -174,7 +171,7 @@ export default function NewAppointmentScreen() {
         await createAppointment(input);
         const clientName =
           base.data?.clients.find((client) => client.id === clientId)?.name ?? 'Cliente';
-        await scheduleAppointmentReminder({ clientName, date, startTime: time });
+        await scheduleAppointmentReminder({ clientName, date, startTime: selectedTime });
       }
       router.back();
     } catch (cause) {
@@ -280,7 +277,7 @@ export default function NewAppointmentScreen() {
             </AppText>
             <View style={styles.professionals}>
               {(base.data?.team ?? []).map((member) => {
-                const selected = professionalId === member.id;
+                const selected = selectedProfessionalId === member.id;
                 return (
                   <Pressable
                     key={member.id}
@@ -340,7 +337,7 @@ export default function NewAppointmentScreen() {
             ) : (
               <View style={styles.slots}>
                 {slots.map((slot) => {
-                  const selected = time === slot.time;
+                  const selected = selectedTime === slot.time;
                   return (
                     <Pressable
                       key={slot.time}

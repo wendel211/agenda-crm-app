@@ -1,5 +1,5 @@
 -- =============================================================
--- Agenda CRM — schema v2 (execute APÓS schema.sql)
+-- Agenda CRM — notificações e mídia (aplicada após a migration de baseline)
 -- Notificações in-app, arquivar clientes, fotos e triggers de evento.
 -- =============================================================
 

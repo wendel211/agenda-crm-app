@@ -11,11 +11,12 @@ import { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 
 import { AuthProvider } from '@/context/auth-context';
+import { Sentry } from '@/lib/monitoring';
 import { colors } from '@/theme';
 
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
+function RootLayout() {
   const [fontsLoaded] = useFonts({
     Manrope_400Regular,
     Manrope_600SemiBold,
@@ -45,3 +46,5 @@ export default function RootLayout() {
     </AuthProvider>
   );
 }
+
+export default Sentry.wrap(RootLayout);

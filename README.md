@@ -32,9 +32,9 @@ npx expo start
 
 Abra no Expo Go (Android/iOS) ou emulador.
 
-**Antes do primeiro uso:** aplique `supabase/schema.sql` e depois `supabase/schema_v2.sql` no SQL Editor — veja [supabase/README.md](supabase/README.md). No painel do Supabase, recomenda-se desativar a confirmação de e-mail (Authentication → Providers → Email) para o cadastro entrar direto no app.
+**Antes do primeiro uso:** aplique as migrations versionadas com `supabase db push` — veja [supabase/README.md](supabase/README.md). No painel do Supabase, recomenda-se desativar a confirmação de e-mail (Authentication → Providers → Email) para o cadastro entrar direto no app.
 
-Testes: `npm test`
+Validação completa do app: `npm run validate`
 
 ## Variáveis de ambiente
 
@@ -42,6 +42,11 @@ Testes: `npm test`
 | --- | --- |
 | `EXPO_PUBLIC_SUPABASE_URL` | URL do projeto Supabase |
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Chave publicável (anon/publishable) |
+| `EXPO_PUBLIC_APP_ENV` | Ambiente enviado ao monitoramento (`development`, `preview`, `production`) |
+| `EXPO_PUBLIC_SENTRY_DSN` | DSN público do projeto Sentry; vazio desativa o envio de eventos |
+
+Para builds com source maps, configure `SENTRY_ORG`, `SENTRY_PROJECT` e o secret
+`SENTRY_AUTH_TOKEN` no EAS/CI. O token nunca deve ser salvo em `.env` versionado.
 
 ## Estrutura
 
@@ -59,14 +64,23 @@ src/
 └── types/         # tipos de domínio
 
 supabase/
-└── schema.sql     # tabelas, RLS e regras de negócio no banco
+├── migrations/    # histórico versionado do banco, RLS e regras de negócio
+└── tests/         # regressões pgTAP executadas pelo CI
 ```
 
 ## Regras de negócio
 
 - **Conflito de horário**: a agenda só oferece horários livres do profissional, e o banco garante a exclusividade mesmo em uso simultâneo.
 - **Concluir → cobrar**: marcar um atendimento como concluído lança a receita no financeiro automaticamente (trigger no banco).
+- **Financeiro idempotente**: cada atendimento possui no máximo uma receita automática; correções de preço/data sincronizam o lançamento e reaberturas o removem.
+- **Escrita atômica**: agendamento e serviços são criados/editados dentro da mesma transação PostgreSQL.
 - **Isolamento por conta**: RLS em todas as tabelas — cada profissional só acessa os próprios dados.
+
+## Qualidade e observabilidade
+
+- GitHub Actions valida lint, TypeScript, Jest, reconstrução das migrations, lint do Postgres e testes pgTAP.
+- Sentry captura falhas não tratadas, erros de carregamento e mutações críticas quando o DSN está configurado.
+- O monitoramento não envia PII por padrão e associa somente IDs técnicos de usuário e negócio.
 
 ## Próximos passos
 
