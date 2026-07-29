@@ -13,7 +13,7 @@ import {
   ScreenHeader,
   TextField,
 } from '@/components/ui';
-import { useBusiness } from '@/context/auth-context';
+import { useAuth, useBusiness } from '@/context/auth-context';
 import {
   createAppointment,
   getAppointment,
@@ -35,6 +35,7 @@ const weekdayShort = new Intl.DateTimeFormat('pt-BR', { weekday: 'short' });
 export default function NewAppointmentScreen() {
   const router = useRouter();
   const business = useBusiness();
+  const { membership } = useAuth();
   const { id } = useLocalSearchParams<{ id?: string }>();
 
   const [clientId, setClientId] = useState<string>();
@@ -53,9 +54,17 @@ export default function NewAppointmentScreen() {
         listServices(business.id),
         listTeam(business.id),
       ]);
-      return { clients, services, team: team.filter((member) => member.active) };
+      return {
+        clients,
+        services,
+        team: team.filter(
+          (member) =>
+            member.active &&
+            (membership?.role !== 'professional' || member.id === membership.professionalId),
+        ),
+      };
     },
-    [business.id],
+    [business.id, membership?.professionalId, membership?.role],
   );
 
   const selectedProfessionalId = professionalId ?? (!id ? base.data?.team[0]?.id : undefined);

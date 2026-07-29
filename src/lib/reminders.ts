@@ -1,7 +1,9 @@
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 
 import { parseISODate } from './format';
 import { timeToMinutes } from './time';
+import { supabase } from './supabase';
 
 const REMINDER_MINUTES_BEFORE = 60;
 const CHANNEL_ID = 'reminders';
@@ -26,6 +28,46 @@ async function loadNotifications() {
     handlerConfigured = true;
   }
   return Notifications;
+}
+
+/** Registra o aparelho para resumos remotos; falhas não bloqueiam o login. */
+export async function registerDevicePushToken(
+  businessId: string,
+  userId: string,
+): Promise<void> {
+  if (Platform.OS !== 'android' && Platform.OS !== 'ios') {
+    return;
+  }
+  const projectId =
+    Constants.easConfig?.projectId ??
+    (Constants.expoConfig?.extra?.eas?.projectId as string | undefined);
+  if (!projectId) {
+    return;
+  }
+
+  const Notifications = await loadNotifications();
+  const current = await Notifications.getPermissionsAsync();
+  const permission = current.granted
+    ? current
+    : await Notifications.requestPermissionsAsync();
+  if (!permission.granted) {
+    return;
+  }
+
+  const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
+  const { error } = await supabase.from('push_tokens').upsert(
+    {
+      business_id: businessId,
+      user_id: userId,
+      token,
+      platform: Platform.OS,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'token' },
+  );
+  if (error) {
+    throw new Error(error.message);
+  }
 }
 
 /**

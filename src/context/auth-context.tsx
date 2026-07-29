@@ -2,20 +2,24 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 import { Linking } from 'react-native';
 import type { Session } from '@supabase/supabase-js';
 
-import { fetchMyBusiness } from '@/data/business';
+import { fetchMyBusinessContext } from '@/data/business';
 import { identifyMonitoringUser, reportError } from '@/lib/monitoring';
+import { hasPermission, type Permission } from '@/lib/permissions';
+import { registerDevicePushToken } from '@/lib/reminders';
 import { supabase } from '@/lib/supabase';
-import type { Business } from '@/types';
+import type { Business, BusinessMembership } from '@/types';
 
 interface AuthState {
   session: Session | null;
   business: Business | null;
+  membership: BusinessMembership | null;
   /** true enquanto sessão e negócio ainda não foram resolvidos no arranque. */
   loading: boolean;
   /** true quando o app foi aberto por um link de recuperação de senha. */
   passwordRecovery: boolean;
   clearPasswordRecovery: () => void;
   refreshBusiness: () => Promise<void>;
+  can: (permission: Permission) => boolean;
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
@@ -23,16 +27,23 @@ const AuthContext = createContext<AuthState | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [business, setBusiness] = useState<Business | null>(null);
+  const [membership, setMembership] = useState<BusinessMembership | null>(null);
   const [loading, setLoading] = useState(true);
   const [passwordRecovery, setPasswordRecovery] = useState(false);
 
   const loadBusiness = useCallback(async (activeSession: Session | null) => {
     if (!activeSession) {
       setBusiness(null);
+      setMembership(null);
       return;
     }
     try {
-      setBusiness(await fetchMyBusiness());
+      const context = await fetchMyBusinessContext();
+      setBusiness(context?.business ?? null);
+      setMembership(context?.membership ?? null);
+      if (context?.business) {
+        registerDevicePushToken(context.business.id, activeSession.user.id).catch(() => undefined);
+      }
     } catch (error) {
       // Falha transitória (rede, timeout): mantém o último negócio conhecido
       // em vez de derrubar o guard de rota para quem já está logado.
@@ -57,11 +68,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.subscription.unsubscribe();
   }, [loadBusiness]);
 
-  // Deep link de recuperação de senha: extrai os tokens do fragmento da URL
-  // (detectSessionInUrl é desligado no React Native) e abre a sessão temporária.
+  // Supabase retorna recuperação, convite e magic link pelo fragmento da URL.
+  // Como detectSessionInUrl é desligado no React Native, abrimos a sessão aqui.
   useEffect(() => {
     async function handleUrl(url: string | null) {
-      if (!url || !url.includes('reset-password')) {
+      if (!url) {
         return;
       }
       const fragment = url.split('#')[1];
@@ -71,12 +82,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const params = new URLSearchParams(fragment);
       const accessToken = params.get('access_token');
       const refreshToken = params.get('refresh_token');
+      const type = params.get('type');
       if (accessToken && refreshToken) {
         const { error } = await supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken,
         });
-        if (!error) {
+        if (!error && type === 'recovery') {
           setPasswordRecovery(true);
         }
       }
@@ -92,6 +104,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [loadBusiness, session]);
 
   const clearPasswordRecovery = useCallback(() => setPasswordRecovery(false), []);
+  const can = useCallback(
+    (permission: Permission) => hasPermission(membership?.role, permission),
+    [membership?.role],
+  );
 
   useEffect(() => {
     identifyMonitoringUser(session?.user.id, business?.id);
@@ -99,7 +115,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ session, business, loading, passwordRecovery, clearPasswordRecovery, refreshBusiness }}
+      value={{
+        session,
+        business,
+        membership,
+        loading,
+        passwordRecovery,
+        clearPasswordRecovery,
+        refreshBusiness,
+        can,
+      }}
     >
       {children}
     </AuthContext.Provider>

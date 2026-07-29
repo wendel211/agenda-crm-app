@@ -48,7 +48,6 @@ export default function OnboardingScreen() {
     setSaving(true);
     try {
       await createBusiness({
-        ownerId: session.user.id,
         ownerName: (session.user.user_metadata.full_name as string | undefined) ?? 'Você',
         name: businessName.trim(),
         segments: selectedSegments,

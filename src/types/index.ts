@@ -12,6 +12,15 @@ export interface Business {
   name: string;
   segments: string[];
   schedule: DaySchedule[];
+  logoUrl?: string;
+}
+
+export type BusinessRole = 'owner' | 'admin' | 'receptionist' | 'professional';
+
+export interface BusinessMembership {
+  id: string;
+  role: BusinessRole;
+  professionalId?: string;
 }
 
 export type AppointmentStatus = 'agendado' | 'confirmado' | 'concluido' | 'cancelado' | 'faltou';
@@ -85,4 +94,15 @@ export interface TeamMember {
   name: string;
   role: string;
   active: boolean;
+}
+
+export type MemberStatus = 'invited' | 'active' | 'revoked';
+
+export interface TeamAccess {
+  membershipId: string;
+  professionalId?: string;
+  name: string;
+  email?: string;
+  role: BusinessRole;
+  status: MemberStatus;
 }

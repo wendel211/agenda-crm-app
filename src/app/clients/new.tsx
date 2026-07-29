@@ -59,7 +59,7 @@ export default function ClientFormScreen() {
       // Foto nova (URI local) sobe para o Storage; URL existente é mantida.
       let avatarUrl: string | undefined;
       if (photoUri?.startsWith('file')) {
-        avatarUrl = await uploadImage(photoUri, `clients/${business.id}`);
+        avatarUrl = await uploadImage(photoUri, business.id, 'clients');
       }
       await saveClient({
         id,

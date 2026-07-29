@@ -40,6 +40,19 @@ supabase test db
 O CI reconstrói um banco vazio a partir de todas as migrations antes de executar os
 testes pgTAP em [`tests/`](./tests).
 
+## Deploy remoto
+
+O workflow manual **Deploy Supabase** aplica migrations e publica as duas Edge Functions.
+Cadastre no GitHub:
+
+- `SUPABASE_ACCESS_TOKEN`
+- `SUPABASE_PROJECT_ID`
+- `SUPABASE_DB_PASSWORD`
+
+Para convites, configure `APP_INVITE_REDIRECT_URL=agendacrm://` nos secrets das Edge Functions.
+Para push remoto, inicialize o projeto EAS para que `Constants.easConfig.projectId` esteja
+disponível no build e agende `daily-reminders` no Cron do Supabase.
+
 ## Recomendação para o MVP
 
 Em **Authentication → Providers → Email**, desative "Confirm email" para o cadastro entrar direto no app sem fricção de confirmação.
@@ -49,4 +62,7 @@ Em **Authentication → Providers → Email**, desative "Confirm email" para o c
 - **Conflito de horário**: a constraint `no_overlapping_appointments` impede dois agendamentos ativos do mesmo profissional no mesmo intervalo — cancelamentos e faltas liberam o horário.
 - **Concluir → reconciliar**: a trigger `on_appointment_financial_sync` mantém exatamente uma receita por atendimento concluído e a remove se o status for reaberto/cancelado.
 - **Agendamento atômico**: os RPCs `create_appointment_atomic` e `update_appointment_atomic` validam todas as relações e gravam horário + serviços na mesma transação.
-- **RLS em tudo**: cada usuário só acessa dados do próprio negócio.
+- **RLS em tudo**: cada usuário só acessa os dados autorizados pelo vínculo e papel no negócio.
+- **Equipe com acesso próprio**: proprietário e administrador gerenciam convites; recepção opera
+  agendas; profissional fica restrito à própria agenda.
+- **Onboarding atômico**: negócio, proprietário, vínculo e serviços iniciais são gravados juntos.

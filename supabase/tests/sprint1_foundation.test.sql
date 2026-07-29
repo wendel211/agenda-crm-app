@@ -64,6 +64,7 @@ values
 
 set local role authenticated;
 set local "request.jwt.claims" = '{"sub":"10000000-0000-0000-0000-000000000001","role":"authenticated"}';
+set local "request.jwt.claim.sub" = '10000000-0000-0000-0000-000000000001';
 
 select has_function(
   'public',

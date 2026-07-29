@@ -22,6 +22,15 @@ CRM e agenda para profissionais de beleza — agendamentos, clientes, serviços,
 | Financeiro | Saldo com entradas/saídas, lançamentos, novo lançamento, relatórios |
 | Extras | Metas, notificações, perfil do negócio, horário de funcionamento, equipe, assinatura |
 
+## Acesso da equipe
+
+- **Proprietário e administrador:** configurações, equipe, serviços, agenda, clientes, financeiro e metas.
+- **Recepção:** agendas de todos os profissionais e clientes, sem acesso ao financeiro ou às configurações.
+- **Profissional:** somente a própria agenda e os clientes necessários ao atendimento.
+
+Convites são enviados pela Edge Function `invite-business-member`. O acesso entra em vigor no
+primeiro login e pode ser alterado ou revogado imediatamente na tela de equipe.
+
 ## Rodando o projeto
 
 ```bash
@@ -34,7 +43,8 @@ Abra no Expo Go (Android/iOS) ou emulador.
 
 **Antes do primeiro uso:** aplique as migrations versionadas com `supabase db push` — veja [supabase/README.md](supabase/README.md). No painel do Supabase, recomenda-se desativar a confirmação de e-mail (Authentication → Providers → Email) para o cadastro entrar direto no app.
 
-Validação completa do app: `npm run validate`
+Validação completa do app: `npm run validate`. O CI também executa Expo Doctor, auditoria de
+dependências de produção, reconstrução das migrations e testes pgTAP.
 
 ## Variáveis de ambiente
 
@@ -75,6 +85,10 @@ supabase/
 - **Financeiro idempotente**: cada atendimento possui no máximo uma receita automática; correções de preço/data sincronizam o lançamento e reaberturas o removem.
 - **Escrita atômica**: agendamento e serviços são criados/editados dentro da mesma transação PostgreSQL.
 - **Isolamento por conta**: RLS em todas as tabelas — cada profissional só acessa os próprios dados.
+- **Permissões por papel**: autorização é validada pelo Postgres; esconder ações na interface é
+  apenas uma camada adicional.
+- **Onboarding atômico**: negócio, proprietário, acesso e serviços iniciais são criados na mesma
+  transação.
 
 ## Qualidade e observabilidade
 
@@ -84,7 +98,6 @@ supabase/
 
 ## Próximos passos
 
-- [ ] Push remoto (deploy da edge function `daily-reminders` + tabela de tokens)
+- [ ] Configurar os secrets do workflow `Deploy Supabase` e executá-lo no ambiente remoto
 - [ ] Link público de agendamento online
-- [ ] Convite de profissionais com login próprio
 - [ ] Assinatura do plano Pro (RevenueCat)
