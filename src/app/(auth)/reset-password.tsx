@@ -39,7 +39,7 @@ export default function ResetPasswordScreen() {
   return (
     <Screen>
       <View style={styles.form}>
-        <AppText variant="title">Criar nova senha</AppText>
+        <AppText variant="institutionalTitle">Criar nova senha</AppText>
         <AppText variant="body" color={colors.sub}>
           Escolha uma nova senha para a sua conta.
         </AppText>

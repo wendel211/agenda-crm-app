@@ -78,7 +78,7 @@ export default function OnboardingScreen() {
 
       {step === 0 ? (
         <View style={styles.stepBody}>
-          <AppText variant="title">Sobre o seu negócio</AppText>
+          <AppText variant="institutionalTitle">Sobre o seu negócio</AppText>
           <AppText variant="body" color={colors.sub}>
             Isso personaliza sua agenda e seus relatórios.
           </AppText>
@@ -116,7 +116,7 @@ export default function OnboardingScreen() {
 
       {step === 1 ? (
         <View style={styles.stepBody}>
-          <AppText variant="title">Horário de atendimento</AppText>
+          <AppText variant="institutionalTitle">Horário de atendimento</AppText>
           <AppText variant="body" color={colors.sub}>
             Sua agenda só mostrará horários dentro desse intervalo. Você pode refinar depois.
           </AppText>
@@ -161,7 +161,7 @@ export default function OnboardingScreen() {
 
       {step === 2 ? (
         <View style={styles.stepBody}>
-          <AppText variant="title">Seus serviços</AppText>
+          <AppText variant="institutionalTitle">Seus serviços</AppText>
           <AppText variant="body" color={colors.sub}>
             Selecione o que você oferece — preços e durações vêm depois.
           </AppText>

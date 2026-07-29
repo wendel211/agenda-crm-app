@@ -26,7 +26,7 @@ export default function ForgotPasswordScreen() {
     <Screen>
       <ScreenHeader title="Recuperar senha" />
       <View style={styles.form}>
-        <AppText variant="title">Sem pânico</AppText>
+        <AppText variant="institutionalTitle">Sem pânico</AppText>
         <AppText variant="body" color={colors.sub}>
           Informe seu e-mail e enviaremos um link para você criar uma nova senha.
         </AppText>
