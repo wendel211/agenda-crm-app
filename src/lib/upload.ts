@@ -20,9 +20,13 @@ export async function pickImage(): Promise<string | undefined> {
 }
 
 /** Sobe a imagem para o Storage e devolve a URL pública. */
-export async function uploadImage(localUri: string, folder: string): Promise<string> {
+export async function uploadImage(
+  localUri: string,
+  businessId: string,
+  folder: string,
+): Promise<string> {
   const arrayBuffer = await fetch(localUri).then((response) => response.arrayBuffer());
-  const path = `${folder}/${Date.now()}.jpg`;
+  const path = `${businessId}/${folder}/${Date.now()}.jpg`;
 
   const { error } = await supabase.storage.from(BUCKET).upload(path, arrayBuffer, {
     contentType: 'image/jpeg',

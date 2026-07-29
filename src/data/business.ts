@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { servicePalette } from '@/theme';
-import type { Business, DaySchedule } from '@/types';
+import type { Business, BusinessMembership, BusinessRole, DaySchedule } from '@/types';
 
 const WEEK: string[] = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
 
@@ -13,6 +13,10 @@ interface BusinessRow {
   name: string;
   segments: string[];
   schedule: DaySchedule[];
+  logo_url?: string | null;
+  membership_id?: string;
+  membership_role?: BusinessRole;
+  professional_id?: string | null;
 }
 
 function mapBusiness(row: BusinessRow): Business {
@@ -21,22 +25,33 @@ function mapBusiness(row: BusinessRow): Business {
     name: row.name,
     segments: row.segments,
     schedule: row.schedule.length > 0 ? row.schedule : defaultSchedule(),
+    logoUrl: row.logo_url ?? undefined,
   };
 }
 
-export async function fetchMyBusiness(): Promise<Business | null> {
-  const { data, error } = await supabase
-    .from('businesses')
-    .select('id, name, segments, schedule')
-    .maybeSingle();
+export async function fetchMyBusinessContext(): Promise<{
+  business: Business;
+  membership: BusinessMembership;
+} | null> {
+  const { data, error } = await supabase.rpc('get_my_business_context');
   if (error) {
     throw new Error(error.message);
   }
-  return data ? mapBusiness(data) : null;
+  const row = (data?.[0] ?? null) as BusinessRow | null;
+  if (!row?.membership_id || !row.membership_role) {
+    return null;
+  }
+  return {
+    business: mapBusiness(row),
+    membership: {
+      id: row.membership_id,
+      role: row.membership_role,
+      professionalId: row.professional_id ?? undefined,
+    },
+  };
 }
 
 interface CreateBusinessInput {
-  ownerId: string;
   ownerName: string;
   name: string;
   segments: string[];
@@ -47,45 +62,26 @@ interface CreateBusinessInput {
 
 /** Onboarding: cria o negócio, o dono como profissional e os serviços iniciais. */
 export async function createBusiness(input: CreateBusinessInput): Promise<Business> {
-  const { data, error } = await supabase
-    .from('businesses')
-    .insert({
-      owner_id: input.ownerId,
-      name: input.name,
-      segments: input.segments,
-      schedule: defaultSchedule(input.opensAt, input.closesAt),
-    })
-    .select('id, name, segments, schedule')
-    .single();
+  const schedule = defaultSchedule(input.opensAt, input.closesAt);
+  const { data: businessId, error } = await supabase.rpc('create_business_atomic', {
+    p_name: input.name,
+    p_segments: input.segments,
+    p_schedule: schedule,
+    p_owner_name: input.ownerName,
+    p_service_names: input.serviceNames,
+    p_service_colors: input.serviceNames.map(
+      (_, index) => servicePalette[index % servicePalette.length],
+    ),
+  });
   if (error) {
     throw new Error(error.message);
   }
-
-  const { error: teamError } = await supabase.from('team_members').insert({
-    business_id: data.id,
-    name: input.ownerName,
-    role: 'Proprietário(a)',
-  });
-  if (teamError) {
-    throw new Error(teamError.message);
-  }
-
-  if (input.serviceNames.length > 0) {
-    const { error: servicesError } = await supabase.from('services').insert(
-      input.serviceNames.map((name, index) => ({
-        business_id: data.id,
-        name,
-        duration_minutes: 60,
-        price: 0,
-        color: servicePalette[index % servicePalette.length],
-      })),
-    );
-    if (servicesError) {
-      throw new Error(servicesError.message);
-    }
-  }
-
-  return mapBusiness(data);
+  return {
+    id: businessId as string,
+    name: input.name,
+    segments: input.segments,
+    schedule,
+  };
 }
 
 export async function updateBusiness(

@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/ui';
+import { useAuth } from '@/context/auth-context';
 import { colors, radius, shadow, spacing } from '@/theme';
 
 const tabs = [
@@ -16,8 +17,12 @@ const tabs = [
 
 function TabBar({ state, navigation }: BottomTabBarProps) {
   const router = useRouter();
+  const { can } = useAuth();
   const insets = useSafeAreaInsets();
   const current = state.routes[state.index]?.name;
+  const visibleTabs = can('viewFinance')
+    ? tabs
+    : tabs.filter((tab) => tab.name !== 'finance');
 
   const renderTab = (tab: (typeof tabs)[number]) => {
     const active = current === tab.name;
@@ -44,7 +49,7 @@ function TabBar({ state, navigation }: BottomTabBarProps) {
 
   return (
     <View style={[styles.bar, { paddingBottom: insets.bottom + spacing.sm }]}>
-      {tabs.slice(0, 2).map(renderTab)}
+      {visibleTabs.slice(0, 2).map(renderTab)}
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Novo agendamento"
@@ -53,7 +58,7 @@ function TabBar({ state, navigation }: BottomTabBarProps) {
       >
         <Ionicons name="add" size={30} color={colors.onPrimary} />
       </Pressable>
-      {tabs.slice(2).map(renderTab)}
+      {visibleTabs.slice(2).map(renderTab)}
     </View>
   );
 }

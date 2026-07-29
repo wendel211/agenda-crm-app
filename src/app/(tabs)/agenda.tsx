@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { AppointmentCard } from '@/components/appointment-card';
 import { QueryBoundary } from '@/components/query-boundary';
 import { AppText, EmptyState, Screen } from '@/components/ui';
-import { useBusiness } from '@/context/auth-context';
+import { useAuth, useBusiness } from '@/context/auth-context';
 import { listAppointmentsBetween } from '@/data/appointments';
 import { listTeam } from '@/data/team';
 import { useQuery } from '@/data/use-query';
@@ -45,9 +45,12 @@ function monthRange(iso: string): { from: string; to: string } {
 export default function AgendaScreen() {
   const router = useRouter();
   const business = useBusiness();
+  const { membership } = useAuth();
   const [mode, setMode] = useState<ViewMode>('dia');
   const [selectedDay, setSelectedDay] = useState(toISODate(new Date()));
-  const [professionalId, setProfessionalId] = useState<string>('todos');
+  const [professionalId, setProfessionalId] = useState<string>(
+    membership?.role === 'professional' ? (membership.professionalId ?? 'todos') : 'todos',
+  );
 
   const dayStrip = useMemo(
     () =>
@@ -102,7 +105,11 @@ export default function AgendaScreen() {
     };
   }, [business.id, refetch]);
 
-  const activeTeam = (team.data ?? []).filter((member) => member.active);
+  const activeTeam = (team.data ?? []).filter(
+    (member) =>
+      member.active &&
+      (membership?.role !== 'professional' || member.id === membership.professionalId),
+  );
   const appointments = (data ?? []).filter(
     (item) => professionalId === 'todos' || item.professionalId === professionalId,
   );
@@ -227,7 +234,7 @@ export default function AgendaScreen() {
         </View>
       )}
 
-      {activeTeam.length > 1 ? (
+      {membership?.role !== 'professional' && activeTeam.length > 1 ? (
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}

@@ -11,13 +11,15 @@ import {
   Screen,
   ScreenHeader,
 } from '@/components/ui';
-import { useBusiness } from '@/context/auth-context';
+import { useAuth, useBusiness } from '@/context/auth-context';
+import { roleLabels } from '@/lib/permissions';
 import { supabase } from '@/lib/supabase';
 import { colors, spacing } from '@/theme';
 
 export default function ProfileScreen() {
   const router = useRouter();
   const business = useBusiness();
+  const { membership, can } = useAuth();
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -28,7 +30,10 @@ export default function ProfileScreen() {
     <Screen>
       <ScreenHeader title="Perfil e ajustes" />
 
-      <Card onPress={() => router.push('/profile/edit-business')} style={styles.profileCard}>
+      <Card
+        onPress={can('manageBusiness') ? () => router.push('/profile/edit-business') : undefined}
+        style={styles.profileCard}
+      >
         <Avatar name={business.name} size={56} />
         <View style={styles.profileInfo}>
           <AppText variant="heading">{business.name}</AppText>
@@ -36,50 +41,58 @@ export default function ProfileScreen() {
             {business.segments.length > 0 ? business.segments.join(' · ') : 'Seu negócio de beleza'}
           </AppText>
         </View>
-        <Badge label="Plano grátis" tone="accent" />
+        <Badge label={roleLabels[membership?.role ?? 'professional']} tone="accent" />
       </Card>
 
       <AppText variant="caption" color={colors.sub} style={styles.groupLabel}>
         NEGÓCIO
       </AppText>
       <Card style={styles.group}>
-        <ListRow
-          title="Horário de funcionamento"
-          subtitle="Define os horários livres da agenda"
-          icon="time-outline"
-          onPress={() => router.push('/profile/business-hours')}
-        />
+        {can('manageBusiness') ? (
+          <ListRow
+            title="Horário de funcionamento"
+            subtitle="Define os horários livres da agenda"
+            icon="time-outline"
+            onPress={() => router.push('/profile/business-hours')}
+          />
+        ) : null}
         <ListRow
           title="Equipe"
           subtitle="Profissionais e permissões"
           icon="people-outline"
           onPress={() => router.push('/profile/team')}
         />
-        <ListRow
-          title="Serviços e preços"
-          subtitle="Catálogo completo"
-          icon="cut-outline"
-          onPress={() => router.push('/services')}
-        />
-        <ListRow
-          title="Metas"
-          subtitle="Objetivos do mês e do ano"
-          icon="flag-outline"
-          onPress={() => router.push('/goals')}
-        />
+        {can('manageServices') ? (
+          <ListRow
+            title="Serviços e preços"
+            subtitle="Catálogo completo"
+            icon="cut-outline"
+            onPress={() => router.push('/services')}
+          />
+        ) : null}
+        {can('manageGoals') ? (
+          <ListRow
+            title="Metas"
+            subtitle="Objetivos do mês e do ano"
+            icon="flag-outline"
+            onPress={() => router.push('/goals')}
+          />
+        ) : null}
       </Card>
 
       <AppText variant="caption" color={colors.sub} style={styles.groupLabel}>
         CONTA
       </AppText>
       <Card style={styles.group}>
-        <ListRow
-          title="Assinatura"
-          subtitle="Plano atual e upgrade"
-          icon="diamond-outline"
-          iconColor={colors.accent}
-          onPress={() => router.push('/profile/subscription')}
-        />
+        {membership?.role === 'owner' ? (
+          <ListRow
+            title="Assinatura"
+            subtitle="Plano atual e upgrade"
+            icon="diamond-outline"
+            iconColor={colors.accent}
+            onPress={() => router.push('/profile/subscription')}
+          />
+        ) : null}
         <ListRow
           title="Notificações"
           subtitle="Lembretes e alertas"
