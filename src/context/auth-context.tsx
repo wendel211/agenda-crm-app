@@ -45,9 +45,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         registerDevicePushToken(context.business.id, activeSession.user.id).catch(() => undefined);
       }
     } catch (error) {
+      // Falha transitória (rede, timeout): mantém o último negócio conhecido
+      // em vez de derrubar o guard de rota para quem já está logado.
       reportError(error, { operation: 'load_business', userId: activeSession.user.id });
-      setBusiness(null);
-      setMembership(null);
     }
   }, []);
 

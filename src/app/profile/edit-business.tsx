@@ -45,7 +45,7 @@ export default function EditBusinessScreen() {
 
   return (
     <Screen>
-      <ScreenHeader title="Meu negócio" subtitle="Nome e áreas de atuação" />
+      <ScreenHeader title="Meu negócio" subtitle="Nome e áreas de atuação" titleVariant="institutionalHeading" />
 
       <View style={styles.form}>
         <TextField

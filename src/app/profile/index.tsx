@@ -36,7 +36,7 @@ export default function ProfileScreen() {
       >
         <Avatar name={business.name} size={56} />
         <View style={styles.profileInfo}>
-          <AppText variant="heading">{business.name}</AppText>
+          <AppText variant="institutionalHeading">{business.name}</AppText>
           <AppText variant="caption" color={colors.sub}>
             {business.segments.length > 0 ? business.segments.join(' · ') : 'Seu negócio de beleza'}
           </AppText>

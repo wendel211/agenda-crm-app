@@ -38,7 +38,7 @@ export default function LoginScreen() {
     <Screen>
       <ScreenHeader title="Entrar" />
       <View style={styles.form}>
-        <AppText variant="title">Que bom te ver de novo</AppText>
+        <AppText variant="institutionalTitle">Que bom te ver de novo</AppText>
         <AppText variant="body" color={colors.sub}>
           Acesse sua conta para cuidar da sua agenda.
         </AppText>

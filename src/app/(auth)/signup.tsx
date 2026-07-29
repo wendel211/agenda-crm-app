@@ -54,7 +54,7 @@ export default function SignupScreen() {
     <Screen>
       <ScreenHeader title="Criar conta" />
       <View style={styles.form}>
-        <AppText variant="title">Comece grátis</AppText>
+        <AppText variant="institutionalTitle">Comece grátis</AppText>
         <AppText variant="body" color={colors.sub}>
           Leva menos de um minuto para organizar seu negócio.
         </AppText>
