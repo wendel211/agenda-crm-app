@@ -34,8 +34,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setBusiness(await fetchMyBusiness());
     } catch (error) {
+      // Falha transitória (rede, timeout): mantém o último negócio conhecido
+      // em vez de derrubar o guard de rota para quem já está logado.
       reportError(error, { operation: 'load_business', userId: activeSession.user.id });
-      setBusiness(null);
     }
   }, []);
 
